@@ -90,6 +90,7 @@ LDFLAGS                        += \
     -specs=nano.specs             \
     -specs=nosys.specs            \
     -Wl,--gc-sections             \
+    -Wl,--entry=Reset_Handler     \
     $(NULL)
 
 ECHO                            := @echo
