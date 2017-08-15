@@ -30,16 +30,40 @@ include $(abs_top_nlbuild_autotools_dir)/automake/pre.am
 
 lib_LIBRARIES = libopenthread-samr21.a
 
+override CFLAGS                              := $(filter-out -pedantic-errors,$(CFLAGS))
+override CXXFLAGS                            := $(filter-out -pedantic-errors,$(CXXFLAGS))
+
 libopenthread_samr21_a_CPPFLAGS                                                                    = \
-    -DCPU_SAMR21                                                                                     \
+    -D ARM_MATH_CM0PLUS=true                                                                         \
+    -D BOARD=SAMR21_XPLAINED_PRO                                                                     \
+    -D __SAMR21G18A__                                                                                \
     -I$(top_srcdir)/include                                                                          \
     -I$(top_srcdir)/examples/platforms                                                               \
     -I$(top_srcdir)/src/core                                                                         \
-    -Wno-unknown-pragmas                                                                             \
-    -Wno-sign-compare                                                                                \
-    -Wno-unused-function                                                                             \
+    -I$(top_srcdir)/third_party/microchip/common/boards                                              \
+    -I$(top_srcdir)/third_party/microchip/common/utils                                               \
+    -I$(top_srcdir)/third_party/microchip/sam0/boards                                                \
+    -I$(top_srcdir)/third_party/microchip/sam0/boards/samr21_xplained_pro                            \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/port                                          \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system                                        \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/clock                                  \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/clock/clock_samd21_r21_da_ha1          \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/interrupt                              \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/interrupt/system_interrupt_samr21      \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/pinmux                                 \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/power                                  \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/power/power_sam_d_r_h                  \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/reset                                  \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/reset/reset_sam_d_r_h                  \
+    -I$(top_srcdir)/third_party/microchip/sam0/utils                                                 \
+    -I$(top_srcdir)/third_party/microchip/sam0/utils/cmsis/samr21/include                            \
+    -I$(top_srcdir)/third_party/microchip/sam0/utils/cmsis/samr21/source                             \
+    -I$(top_srcdir)/third_party/microchip/sam0/utils/header_files                                    \
+    -I$(top_srcdir)/third_party/microchip/sam0/utils/preprocessor                                    \
+    -I$(top_srcdir)/third_party/microchip/thirdparty/CMSIS/Include                                   \
+    -Werror                                                                                          \
     -Wno-unused-parameter                                                                            \
-    -Wno-empty-body                                                                                  \
+    -Wno-implicit-function-declaration                                                               \
     $(NULL)
 
 PLATFORM_SOURCES                                                                                   = \
@@ -55,6 +79,20 @@ endif
 
 libopenthread_samr21_a_SOURCES                                                                    += \
     $(PLATFORM_SOURCES)                                                                              \
+    $(NULL)
+
+nodist_libopenthread_samr21_a_SOURCES                                                             =  \
+    @top_builddir@/third_party/microchip/common/utils/interrupt/interrupt_sam_nvic.c                 \
+    @top_builddir@/third_party/microchip/sam0/boards/samr21_xplained_pro/board_init.c                \
+    @top_builddir@/third_party/microchip/sam0/drivers/port/port.c                                    \
+    @top_builddir@/third_party/microchip/sam0/drivers/system/clock/clock_samd21_r21_da_ha1/clock.c   \
+    @top_builddir@/third_party/microchip/sam0/drivers/system/clock/clock_samd21_r21_da_ha1/gclk.c    \
+    @top_builddir@/third_party/microchip/sam0/drivers/system/interrupt/system_interrupt.c            \
+    @top_builddir@/third_party/microchip/sam0/drivers/system/pinmux/pinmux.c                         \
+    @top_builddir@/third_party/microchip/sam0/drivers/system/system.c                                \
+    @top_builddir@/third_party/microchip/sam0/utils/cmsis/samr21/source/gcc/startup_samr21.c         \
+    @top_builddir@/third_party/microchip/sam0/utils/cmsis/samr21/source/system_samr21.c              \
+    @top_builddir@/third_party/microchip/sam0/utils/syscalls/gcc/syscalls.c                          \
     $(NULL)
 
 noinst_HEADERS                                                                                     = \
