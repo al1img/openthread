@@ -67,6 +67,16 @@ libopenthread_samr21_a_CPPFLAGS                                                 
     $(NULL)
 
 PLATFORM_SOURCES                                                                                   = \
+    alarm.c                                                                                          \
+    cxx_helpers.c                                                                                    \
+    diag.c                                                                                           \
+    flash.c                                                                                          \
+    logging.c                                                                                        \
+    misc.c                                                                                           \
+    platform.c                                                                                       \
+    radio.c                                                                                          \
+    random.c                                                                                         \
+    uart.c                                                                                           \
     $(NULL)
 
 libopenthread_samr21_a_SOURCES                                                                     = \
