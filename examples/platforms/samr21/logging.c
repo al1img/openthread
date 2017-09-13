@@ -35,6 +35,13 @@
 #include <openthread/cli.h>
 #include <openthread/platform/logging.h>
 
+#if (OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT == 0)
+
 void otPlatLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat, ...)
 {
+    (void)aLogLevel;
+    (void)aLogRegion;
+    (void)aFormat;
 }
+
+#endif // (OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT == 0)
