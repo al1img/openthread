@@ -28,52 +28,53 @@
 
 /**
  * @file
- * @brief
  *   This file includes the platform-specific initializers.
+ *
  */
 
-#include "asf.h"
+#ifndef PLATFORM_SAMR21_H_
+#define PLATFORM_SAMR21_H_
 
-#include <openthread/platform/platform.h>
+#include <stdint.h>
 
-#include "platform-samr21.h"
+#include "openthread/types.h"
+/**
+ * This function initializes the alarm service used by OpenThread.
+ *
+ */
+void samr21AlarmInit(void);
 
-otInstance *sInstance;
+/**
+ * This function performs alarm driver processing.
+ *
+ * @param[in]  aInstance  The OpenThread instance structure.
+ *
+ */
+void samr21AlarmProcess(otInstance *aInstance);
 
-void SysTick_Handler(void)
-{
-    port_pin_toggle_output_level(LED_0_PIN);
-}
+/**
+ * This function initializes the radio service used by OpenThread.
+ *
+ */
+void samr21RadioInit(void);
 
-/** Configure LED0, turn it off*/
-static void config_led(void)
-{
-    struct port_config pin_conf;
-    port_get_config_defaults(&pin_conf);
+/**
+ * This function performs radio driver processing.
+ *
+ * @param[in]  aInstance  The OpenThread instance structure.
+ *
+ */
+void samr21RadioProcess(otInstance *aInstance);
 
-    pin_conf.direction  = PORT_PIN_DIR_OUTPUT;
-    port_pin_set_config(LED_0_PIN, &pin_conf);
-    port_pin_set_output_level(LED_0_PIN, LED_0_INACTIVE);
-}
+/**
+ * This function initializes the random number service used by OpenThread.
+ *
+ */
+void samr21RandomInit(void);
 
-void PlatformInit(int argc, char *argv[])
-{
-    system_init();
-
-    /*Configure system tick to generate periodic interrupts */
-    SysTick_Config(system_gclk_gen_get_hz(GCLK_GENERATOR_0));
-
-    config_led();
-
-}
-
-void PlatformDeinit(void)
-{
-}
-
-void PlatformProcessDrivers(otInstance *aInstance)
-{
-    sInstance = aInstance;
-
-    samr21UartProcess();
-}
+/**
+ * This function performs UART driver processing.
+ *
+ */
+void samr21UartProcess(void);
+#endif  // PLATFORM_SAMR21_H_

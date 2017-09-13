@@ -36,19 +36,81 @@
 
 #include <openthread/platform/uart.h>
 
+enum
+{
+    kBaudRate          = 115200,
+    kReceiveBufferSize = 128,
+};
+
+typedef struct RecvBuffer
+{
+    // The data buffer
+    uint8_t  mBuffer[kReceiveBufferSize];
+    // The offset of the first item written to the list.
+    uint16_t mHead;
+    // The offset of the next item to be written to the list.
+    uint16_t mTail;
+} RecvBuffer;
+
 static struct usart_module sUsartInstance;
 
-static uint16_t sRxByte;
+static RecvBuffer sReceive;
 
-void usartReadCallback(struct usart_module *const usartModule)
+static bool sTransmitDone = false;
+
+static void usartReadCallback(struct usart_module *const usartModule)
 {
-    otPlatUartReceived((uint8_t*)&sRxByte, 1);
-    usart_read_job(&sUsartInstance, &sRxByte);
+    if (sReceive.mHead != (sReceive.mTail + 1) % kReceiveBufferSize)
+    {
+        sReceive.mTail = (sReceive.mTail + 1) % kReceiveBufferSize;
+    }
+
+    usart_read_job(&sUsartInstance,
+                   (uint16_t*)&sReceive.mBuffer[sReceive.mTail]);
 }
 
-void usartWriteCallback(struct usart_module *const usartModule)
+static void usartWriteCallback(struct usart_module *const usartModule)
 {
-    otPlatUartSendDone();
+    sTransmitDone = true;
+}
+
+static void processReceive(void)
+{
+    // Copy tail to prevent multiple reads
+    uint16_t tail = sReceive.mTail;
+
+    // If the data wraps around, process the first part
+    if (sReceive.mHead > tail)
+    {
+        otPlatUartReceived(sReceive.mBuffer + sReceive.mHead, kReceiveBufferSize - sReceive.mHead);
+
+        // Reset the buffer mHead back to zero.
+        sReceive.mHead = 0;
+    }
+
+    // For any data remaining, process it
+    if (sReceive.mHead != tail)
+    {
+        otPlatUartReceived(sReceive.mBuffer + sReceive.mHead, tail - sReceive.mHead);
+
+        // Set mHead to the local tail we have cached
+        sReceive.mHead = tail;
+    }
+}
+
+static void processTransmit(void)
+{
+    if (sTransmitDone)
+    {
+        sTransmitDone = false;
+        otPlatUartSendDone();
+    }
+}
+
+void samr21UartProcess(void)
+{
+    processReceive();
+    processTransmit();
 }
 
 otError otPlatUartEnable(void)
@@ -69,6 +131,9 @@ otError otPlatUartEnable(void)
 
     usart_enable(&sUsartInstance);
 
+    sReceive.mHead = 0;
+    sReceive.mTail = 0;
+
     usart_register_callback(&sUsartInstance, usartWriteCallback,
                             USART_CALLBACK_BUFFER_TRANSMITTED);
     usart_register_callback(&sUsartInstance, usartReadCallback,
@@ -77,7 +142,8 @@ otError otPlatUartEnable(void)
     usart_enable_callback(&sUsartInstance, USART_CALLBACK_BUFFER_TRANSMITTED);
     usart_enable_callback(&sUsartInstance, USART_CALLBACK_BUFFER_RECEIVED);
 
-    usart_read_job(&sUsartInstance, &sRxByte);
+    usart_read_job(&sUsartInstance,
+                   (uint16_t*)&sReceive.mBuffer[sReceive.mTail]);
 
     return OT_ERROR_NONE;
 }
