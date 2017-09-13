@@ -32,20 +32,71 @@
  *
  */
 
+#include "asf.h"
+
 #include <openthread/platform/uart.h>
+
+static struct usart_module sUsartInstance;
+
+static uint16_t sRxByte;
+
+void usartReadCallback(struct usart_module *const usartModule)
+{
+    otPlatUartReceived((uint8_t*)&sRxByte, 1);
+    usart_read_job(&sUsartInstance, &sRxByte);
+}
+
+void usartWriteCallback(struct usart_module *const usartModule)
+{
+    otPlatUartSendDone();
+}
 
 otError otPlatUartEnable(void)
 {
+    struct usart_config configUsart;
+
+    usart_get_config_defaults(&configUsart);
+
+    configUsart.baudrate    = 115200;
+    configUsart.mux_setting = EDBG_CDC_SERCOM_MUX_SETTING;
+    configUsart.pinmux_pad0 = EDBG_CDC_SERCOM_PINMUX_PAD0;
+    configUsart.pinmux_pad1 = EDBG_CDC_SERCOM_PINMUX_PAD1;
+    configUsart.pinmux_pad2 = EDBG_CDC_SERCOM_PINMUX_PAD2;
+    configUsart.pinmux_pad3 = EDBG_CDC_SERCOM_PINMUX_PAD3;
+
+    while (usart_init(&sUsartInstance, EDBG_CDC_MODULE, &configUsart)
+           != STATUS_OK);
+
+    usart_enable(&sUsartInstance);
+
+    usart_register_callback(&sUsartInstance, usartWriteCallback,
+                            USART_CALLBACK_BUFFER_TRANSMITTED);
+    usart_register_callback(&sUsartInstance, usartReadCallback,
+                            USART_CALLBACK_BUFFER_RECEIVED);
+
+    usart_enable_callback(&sUsartInstance, USART_CALLBACK_BUFFER_TRANSMITTED);
+    usart_enable_callback(&sUsartInstance, USART_CALLBACK_BUFFER_RECEIVED);
+
+    usart_read_job(&sUsartInstance, &sRxByte);
+
     return OT_ERROR_NONE;
 }
 
 otError otPlatUartDisable(void)
 {
+    usart_disable(&sUsartInstance);
+
     return OT_ERROR_NONE;
 }
 
 otError otPlatUartSend(const uint8_t *aBuf, uint16_t aBufLength)
 {
+    if (usart_write_buffer_job(&sUsartInstance, (uint8_t*)aBuf,
+                               aBufLength) != STATUS_OK)
+    {
+        return OT_ERROR_FAILED;
+    }
+
     return OT_ERROR_NONE;
 }
 

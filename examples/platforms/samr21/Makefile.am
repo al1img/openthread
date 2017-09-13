@@ -37,6 +37,7 @@ libopenthread_samr21_a_CPPFLAGS                                                 
     -D ARM_MATH_CM0PLUS=true                                                                         \
     -D BOARD=SAMR21_XPLAINED_PRO                                                                     \
     -D __SAMR21G18A__                                                                                \
+    -D USART_CALLBACK_MODE=true                                                                      \
     -I$(top_srcdir)/include                                                                          \
     -I$(top_srcdir)/examples/platforms                                                               \
     -I$(top_srcdir)/src/core                                                                         \
@@ -55,6 +56,8 @@ libopenthread_samr21_a_CPPFLAGS                                                 
     -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/power/power_sam_d_r_h                  \
     -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/reset                                  \
     -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/reset/reset_sam_d_r_h                  \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/sercom                                        \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/sercom/usart                                  \
     -I$(top_srcdir)/third_party/microchip/sam0/utils                                                 \
     -I$(top_srcdir)/third_party/microchip/sam0/utils/cmsis/samr21/include                            \
     -I$(top_srcdir)/third_party/microchip/sam0/utils/cmsis/samr21/source                             \
@@ -100,6 +103,10 @@ nodist_libopenthread_samr21_a_SOURCES                                           
     @top_builddir@/third_party/microchip/sam0/drivers/system/interrupt/system_interrupt.c            \
     @top_builddir@/third_party/microchip/sam0/drivers/system/pinmux/pinmux.c                         \
     @top_builddir@/third_party/microchip/sam0/drivers/system/system.c                                \
+    @top_builddir@/third_party/microchip/sam0/drivers/sercom/sercom.c                                \
+    @top_builddir@/third_party/microchip/sam0/drivers/sercom/sercom_interrupt.c                      \
+    @top_builddir@/third_party/microchip/sam0/drivers/sercom/usart/usart.c                           \
+    @top_builddir@/third_party/microchip/sam0/drivers/sercom/usart/usart_interrupt.c                 \
     @top_builddir@/third_party/microchip/sam0/utils/cmsis/samr21/source/gcc/startup_samr21.c         \
     @top_builddir@/third_party/microchip/sam0/utils/cmsis/samr21/source/system_samr21.c              \
     @top_builddir@/third_party/microchip/sam0/utils/syscalls/gcc/syscalls.c                          \

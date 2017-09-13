@@ -73,6 +73,14 @@
 #include <clock.h>
 #include <gclk.h>
 
+// From module: SERCOM Callback API
+#include <sercom.h>
+#include <sercom_interrupt.h>
+
+// From module: SERCOM USART - Serial Communications (Callback APIs)
+#include <usart.h>
+#include <usart_interrupt.h>
+
 // From module: SYSTEM - Core System Driver
 #include <system.h>
 
