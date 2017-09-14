@@ -32,18 +32,57 @@
  *
  */
 
-#include "openthread/platform/alarm-milli.h"
+#include "asf.h"
+
+#include <openthread/platform/alarm-milli.h>
+
+static volatile uint32_t sTime      = 0;
+static uint32_t          sAlarmTime = 0;
 
 void otPlatAlarmMilliStartAt(otInstance *aInstance, uint32_t aT0, uint32_t aDt)
 {
+    (void)aInstance;
+    sAlarmTime = aT0 + aDt;
 }
 
 void otPlatAlarmMilliStop(otInstance *aInstance)
 {
+    (void)aInstance;
+    sAlarmTime = 0;
 }
 
 uint32_t otPlatAlarmMilliGetNow(void)
 {
-    return 0;
+    return sTime;
 }
 
+
+void SysTick_Handler(void)
+{
+    sTime++;
+}
+
+void samr21AlarmInit(void)
+{
+    /*Configure system tick to generate periodic interrupts */
+    SysTick_Config(system_gclk_gen_get_hz(GCLK_GENERATOR_0) / 1000);
+}
+
+void samr21AlarmProcess(otInstance *aInstance)
+{
+    if ((sAlarmTime != 0) && (sTime >= sAlarmTime))
+    {
+        sAlarmTime = 0;
+#if OPENTHREAD_ENABLE_DIAG
+
+        if (otPlatDiagModeGet())
+        {
+            otPlatDiagAlarmFired(aInstance);
+        }
+        else
+#endif
+        {
+            otPlatAlarmMilliFired(aInstance);
+        }
+    }
+}
