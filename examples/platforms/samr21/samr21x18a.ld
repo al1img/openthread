@@ -64,6 +64,14 @@ SECTIONS
         . = ALIGN(4);
         _sfixed = .;
         KEEP(*(.vectors .vectors.*))
+
+		FILL(0xFF)
+        /* PDS NV memory section */
+        . = ALIGN(0x100);
+        PROVIDE(__d_nv_mem_start = .);
+        . += ALIGN(0x1000); /* Size of D_Nv memory section is 0x1000 i.e., 4KB */
+        PROVIDE(__d_nv_mem_end = .);
+
         *(.text .text.* .gnu.linkonce.t.*)
         *(.glue_7t) *(.glue_7)
         *(.rodata .rodata* .gnu.linkonce.r.*)

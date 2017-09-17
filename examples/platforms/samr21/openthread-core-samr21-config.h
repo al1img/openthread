@@ -35,6 +35,11 @@
 #ifndef OPENTHREAD_CORE_SAMR21_CONFIG_H_
 #define OPENTHREAD_CORE_SAMR21_CONFIG_H_
 
+#include <stdint.h>
+
+extern uint32_t __d_nv_mem_start;
+extern uint32_t __d_nv_mem_end;
+
 /**
  * @def OPENTHREAD_CONFIG_PLATFORM_INFO
  *
@@ -57,7 +62,7 @@
  * The base address of settings.
  *
  */
-#define SETTINGS_CONFIG_BASE_ADDRESS                            0x40000
+#define SETTINGS_CONFIG_BASE_ADDRESS                            ((uint32_t)&__d_nv_mem_start)
 
 /**
  * @def SETTINGS_CONFIG_PAGE_SIZE
@@ -65,7 +70,7 @@
  * The page size of settings.
  *
  */
-#define SETTINGS_CONFIG_PAGE_SIZE                               0x800
+#define SETTINGS_CONFIG_PAGE_SIZE                               0x100
 
 /**
  * @def SETTINGS_CONFIG_PAGE_NUM
@@ -73,7 +78,7 @@
  * The page number of settings.
  *
  */
-#define SETTINGS_CONFIG_PAGE_NUM                                2
+#define SETTINGS_CONFIG_PAGE_NUM                                (((uint32_t)&__d_nv_mem_end - (uint32_t)&__d_nv_mem_start) / SETTINGS_CONFIG_PAGE_SIZE)
 
 /**
  * @def RADIO_CONFIG_SRC_MATCH_ENTRY_NUM

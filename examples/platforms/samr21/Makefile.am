@@ -45,6 +45,7 @@ libopenthread_samr21_a_CPPFLAGS                                                 
     -I$(top_srcdir)/third_party/microchip/common/utils                                               \
     -I$(top_srcdir)/third_party/microchip/sam0/boards                                                \
     -I$(top_srcdir)/third_party/microchip/sam0/boards/samr21_xplained_pro                            \
+    -I$(top_srcdir)/third_party/microchip/sam0/drivers/nvm                                           \
     -I$(top_srcdir)/third_party/microchip/sam0/drivers/port                                          \
     -I$(top_srcdir)/third_party/microchip/sam0/drivers/system                                        \
     -I$(top_srcdir)/third_party/microchip/sam0/drivers/system/clock                                  \
@@ -67,6 +68,7 @@ libopenthread_samr21_a_CPPFLAGS                                                 
     -Werror                                                                                          \
     -Wno-unused-parameter                                                                            \
     -Wno-implicit-function-declaration                                                               \
+    -fno-strict-aliasing                                                                             \
     $(NULL)
 
 PLATFORM_SOURCES                                                                                   = \
@@ -97,6 +99,7 @@ libopenthread_samr21_a_SOURCES                                                  
 nodist_libopenthread_samr21_a_SOURCES                                                             =  \
     @top_builddir@/third_party/microchip/common/utils/interrupt/interrupt_sam_nvic.c                 \
     @top_builddir@/third_party/microchip/sam0/boards/samr21_xplained_pro/board_init.c                \
+    @top_builddir@/third_party/microchip/sam0/drivers/nvm/nvm.c                                      \
     @top_builddir@/third_party/microchip/sam0/drivers/port/port.c                                    \
     @top_builddir@/third_party/microchip/sam0/drivers/system/clock/clock_samd21_r21_da_ha1/clock.c   \
     @top_builddir@/third_party/microchip/sam0/drivers/system/clock/clock_samd21_r21_da_ha1/gclk.c    \
