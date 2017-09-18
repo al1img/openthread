@@ -1,9 +1,9 @@
 /**
  * \file
  *
- * \brief SAM R21 Xplained Pro board configuration.
+ * \brief Common Delay Service
  *
- * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
+ * Copyright (c) 2013-2016 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -43,16 +43,59 @@
 /*
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
+#ifndef DELAY_H_INCLUDED
+#define DELAY_H_INCLUDED
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define CONF_BOARD_AT86RFX
+/**
+ * @defgroup group_common_services_delay Busy-Wait Delay Routines
+ *
+ * This module provides simple loop-based delay routines for those
+ * applications requiring a brief wait during execution. Common for
+ * API ver. 2.
+ *
+ * @{
+ */
 
-#define AT86RFX_SPI_BAUDRATE             5000000UL
+#ifdef SYSTICK_MODE
+#include "sam0/systick_counter.h"
+#endif
+#ifdef CYCLE_MODE
+#include "sam0/cycle_counter.h"
+#endif
 
-#define CONF_USER_ROW 0x804008
+void delay_init(void);
 
-#define CONF_IEEE_ADDRESS 0x0001020304050607LL
+/**
+ * \def delay_s
+ * \brief Delay in at least specified number of seconds.
+ * \param delay Delay in seconds
+ */
+#define delay_s(delay)          ((delay) ? cpu_delay_s(delay) : cpu_delay_us(1))
 
-#endif /* CONF_BOARD_H_INCLUDED */
+/**
+ * \def delay_ms
+ * \brief Delay in at least specified number of milliseconds.
+ * \param delay Delay in milliseconds
+ */
+#define delay_ms(delay)         ((delay) ? cpu_delay_ms(delay) : cpu_delay_us(1))
+
+/**
+ * \def delay_us
+ * \brief Delay in at least specified number of microseconds.
+ * \param delay Delay in microseconds
+ */
+#define delay_us(delay)         ((delay) ? cpu_delay_us(delay) : cpu_delay_us(1))
+
+#ifdef __cplusplus
+}
+#endif
+
+/**
+ * @}
+ */
+
+#endif /* DELAY_H_INCLUDED */

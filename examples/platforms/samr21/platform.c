@@ -43,7 +43,9 @@ otInstance *sInstance;
 void PlatformInit(int argc, char *argv[])
 {
     system_init();
+    board_init();
     samr21AlarmInit();
+    samr21RadioInit();
 }
 
 void PlatformDeinit(void)
@@ -56,4 +58,5 @@ void PlatformProcessDrivers(otInstance *aInstance)
 
     samr21UartProcess();
     samr21AlarmProcess(aInstance);
+    samr21RadioProcess(aInstance);
 }

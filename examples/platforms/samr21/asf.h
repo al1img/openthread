@@ -59,6 +59,10 @@
 // From module: Generic board support
 #include <board.h>
 
+// From module: EXTINT - External Interrupt (Callback APIs)
+#include <extint.h>
+#include <extint_callback.h>
+
 // From module: Interrupt management - SAM implementation
 #include <interrupt.h>
 
@@ -78,6 +82,9 @@
 // From module: SERCOM Callback API
 #include <sercom.h>
 #include <sercom_interrupt.h>
+
+// From module: SERCOM SPI - Serial Peripheral Interface (Polled APIs)
+#include <spi.h>
 
 // From module: SERCOM USART - Serial Communications (Callback APIs)
 #include <usart.h>

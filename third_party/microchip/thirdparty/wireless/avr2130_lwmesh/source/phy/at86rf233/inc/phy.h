@@ -1,13 +1,11 @@
 /**
- * \file
+ * \file phy.h
  *
- * \brief SAM R21 Xplained Pro board configuration.
+ * \brief AT86RF233 PHY interface
  *
- * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
+ * Copyright (C) 2014-2015 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
- *
- * \page License
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -39,20 +37,61 @@
  *
  * \asf_license_stop
  *
- */
-/*
- * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
+ *
  */
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+#ifndef _PHY_H_
+#define _PHY_H_
 
-#define CONF_BOARD_AT86RFX
+/*- Includes ---------------------------------------------------------------*/
+#include <stdint.h>
+#include <stdbool.h>
 
-#define AT86RFX_SPI_BAUDRATE             5000000UL
+/**
+ * \ingroup group_phy_233
+ * @{
+ */
 
-#define CONF_USER_ROW 0x804008
+/*- Definitions ------------------------------------------------------------*/
+#define PHY_RSSI_BASE_VAL                     (-91)
 
-#define CONF_IEEE_ADDRESS 0x0001020304050607LL
+#define PHY_HAS_RANDOM_NUMBER_GENERATOR
+#define PHY_HAS_AES_MODULE
 
-#endif /* CONF_BOARD_H_INCLUDED */
+/*- Types ------------------------------------------------------------------*/
+typedef struct PHY_DataInd_t {
+	uint8_t *data;
+	uint8_t size;
+	uint8_t lqi;
+	int8_t rssi;
+} PHY_DataInd_t;
+
+enum {
+	PHY_STATUS_SUCCESS                = 0,
+	PHY_STATUS_CHANNEL_ACCESS_FAILURE = 1,
+	PHY_STATUS_NO_ACK                 = 2,
+	PHY_STATUS_ERROR                  = 3,
+};
+
+/*- Prototypes -------------------------------------------------------------*/
+void PHY_Init(void);
+void PHY_SetRxState(bool rx);
+void PHY_SetChannel(uint8_t channel);
+void PHY_SetPanId(uint16_t panId);
+void PHY_SetShortAddr(uint16_t addr);
+void PHY_SetTxPower(uint8_t txPower);
+void PHY_Sleep(void);
+void PHY_Wakeup(void);
+void PHY_DataReq(uint8_t *data);
+void PHY_DataConf(uint8_t status);
+void PHY_DataInd(PHY_DataInd_t *ind);
+void PHY_TaskHandler(void);
+void PHY_SetIEEEAddr(uint8_t *ieee_addr);
+uint16_t PHY_RandomReq(void);
+
+void PHY_EncryptReq(uint8_t *text, uint8_t *key);
+
+int8_t PHY_EdReq(void);
+
+/** @} */
+#endif /* _PHY_H_ */

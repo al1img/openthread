@@ -1,9 +1,9 @@
 /**
  * \file
  *
- * \brief SAM R21 Xplained Pro board configuration.
+ * \brief ARM functions for busy-wait delay loops
  *
- * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
+ * Copyright (c) 2012-2015 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -44,15 +44,32 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+#include "delay.h"
 
-#define CONF_BOARD_AT86RFX
+/**
+ * \brief Initialize the delay driver.
+ *
+ * Not used in cycle mode.
+ */
+void delay_init(void)
+{
+}
 
-#define AT86RFX_SPI_BAUDRATE             5000000UL
+// Delay loop is put to SRAM so that FWS will not affect delay time
+OPTIMIZE_HIGH
+RAMFUNC
+void portable_delay_cycles(unsigned long n)
+{
+	UNUSED(n);
 
-#define CONF_USER_ROW 0x804008
-
-#define CONF_IEEE_ADDRESS 0x0001020304050607LL
-
-#endif /* CONF_BOARD_H_INCLUDED */
+	__asm (
+		"loop: DMB	\n"
+#ifdef __ICCARM__
+		"SUBS r0, r0, #1 \n"
+#else
+		"SUB r0, r0, #1 \n"
+#endif
+		"CMP r0, #0  \n"
+		"BNE loop         "
+	);
+}

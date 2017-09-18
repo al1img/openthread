@@ -32,22 +32,90 @@
  *
  */
 
+#include "asf.h"
+
+#include <phy.h>
+
+#include <openthread/platform/alarm-milli.h>
 #include <openthread/platform/radio.h>
+
+#define RSSI_BASE_VALUE (-94)
+
+static otRadioFrame   sTransmitFrame;
+static uint8_t        sTransmitPsdu[OT_RADIO_FRAME_MAX_SIZE];
+
+static int8_t   sMaxRssi;
+static uint32_t sScanStartTime;
+static uint16_t sScanDuration;
+bool sStartScan = false;
+
+void samr21RadioInit(void)
+{
+    sTransmitFrame.mLength = 0;
+    sTransmitFrame.mPsdu   = sTransmitPsdu;
+
+    PHY_Init();
+}
+
+void samr21RadioProcess(otInstance *aInstance)
+{
+    (void)aInstance;
+
+    if (sStartScan)
+    {
+        if ((otPlatAlarmMilliGetNow() - sScanStartTime) < sScanDuration)
+        {
+            int8_t curRssi = PHY_EdReq();
+
+            if (curRssi > sMaxRssi)
+            {
+                sMaxRssi = curRssi;
+            }
+        }
+        else
+        {
+            sStartScan = false;
+            otPlatRadioEnergyScanDone(aInstance, sMaxRssi);
+        }
+    }
+}
 
 void otPlatRadioGetIeeeEui64(otInstance *aInstance, uint8_t *aIeeeEui64)
 {
+    (void)aInstance;
+
+#ifdef CONF_IEEE_ADDRESS
+    *((uint64_t*)aIeeeEui64) = CONF_IEEE_ADDRESS;
+#else
+    uint8_t* userRow = (uint8_t*)CONF_USER_ROW;
+
+    for (uint8_t i = 0; i < OT_EXT_ADDRESS_SIZE; i++)
+    {
+        // TODO: define proper userRow struct
+        aIeeeEui64[i] = userRow[2 + i];
+    }
+#endif
 }
 
 void otPlatRadioSetPanId(otInstance *aInstance, uint16_t aPanId)
 {
+    (void)aInstance;
+
+    PHY_SetPanId(aPanId);
 }
 
 void otPlatRadioSetExtendedAddress(otInstance *aInstance, const otExtAddress *aAddress)
 {
+    (void)aInstance;
+
+    PHY_SetIEEEAddr((uint8_t*)aAddress);
 }
 
 void otPlatRadioSetShortAddress(otInstance *aInstance, uint16_t aAddress)
 {
+    (void)aInstance;
+
+    PHY_SetShortAddr(aAddress);
 }
 
 bool otPlatRadioIsEnabled(otInstance *aInstance)
@@ -82,22 +150,24 @@ otError otPlatRadioTransmit(otInstance *aInstance, otRadioFrame *aFrame)
 
 otRadioFrame *otPlatRadioGetTransmitBuffer(otInstance *aInstance)
 {
-    return 0;
+    (void)aInstance;
+
+    return &sTransmitFrame;
 }
 
 int8_t otPlatRadioGetRssi(otInstance *aInstance)
 {
-    return 0;
+    return RSSI_BASE_VALUE + sMaxRssi;
 }
 
 otRadioCaps otPlatRadioGetCaps(otInstance *aInstance)
 {
-    return OT_RADIO_CAPS_ACK_TIMEOUT;
+    return OT_RADIO_CAPS_ENERGY_SCAN;
 }
 
 bool otPlatRadioGetPromiscuous(otInstance *aInstance)
 {
-    return true;
+    return false;
 }
 
 void otPlatRadioSetPromiscuous(otInstance *aInstance, bool aEnable)
@@ -138,7 +208,14 @@ void otPlatRadioClearSrcMatchExtEntries(otInstance *aInstance)
 
 otError otPlatRadioEnergyScan(otInstance *aInstance, uint8_t aScanChannel, uint16_t aScanDuration)
 {
-    return OT_ERROR_NOT_IMPLEMENTED;
+    sScanStartTime = otPlatAlarmMilliGetNow();
+    sScanDuration = aScanDuration;
+
+    sMaxRssi = PHY_EdReq();
+
+    sStartScan = true;
+
+    return OT_ERROR_NONE;
 }
 
 void otPlatRadioSetDefaultTxPower(otInstance *aInstance, int8_t aPower)

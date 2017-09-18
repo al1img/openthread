@@ -1,9 +1,9 @@
 /**
- * \file
+ * @file sal_types.h
  *
- * \brief SAM R21 Xplained Pro board configuration.
+ * @brief This file contains defines for SAL types.
  *
- * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
+ * Copyright (c) 2013-2015 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -40,19 +40,43 @@
  * \asf_license_stop
  *
  */
+
 /*
- * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
+ * Copyright (c) 2013-2015 Atmel Corporation. All rights reserved.
+ *
+ * Licensed under Atmel's Limited License Agreement --> EULA.txt
  */
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+/* Prevent double inclusion */
+#ifndef SAL_TYPES_H
+#define SAL_TYPES_H
 
-#define CONF_BOARD_AT86RFX
+/* === INCLUDES ============================================================ */
 
-#define AT86RFX_SPI_BAUDRATE             5000000UL
+/* SAL types for security: */
+/** Dummy SAL type */
+#define NO_SAL                          (0x00)
 
-#define CONF_USER_ROW 0x804008
+/** SAL with transceiver based AES via SPI,
+ * such as AT86RF231, AT86RF212, etc.
+ */
+#define AT86RF2xx                       (0x01)
+/** SAL with single chip transceiver based AES */
+#define ATMEGARF_SAL                    (0x02)
+/** AES software implementation */
+#define SW_AES_SAL                      (0x03)
+/** SAL with ATxmega family based AES */
+#define ATXMEGA_SAL                     (0x04)
 
-#define CONF_IEEE_ADDRESS 0x0001020304050607LL
+/* === PROTOTYPES ========================================================== */
 
-#endif /* CONF_BOARD_H_INCLUDED */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#endif /* SAL_TYPES_H */
+/* EOF */

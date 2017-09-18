@@ -1,9 +1,9 @@
 /**
  * \file
  *
- * \brief SAM R21 Xplained Pro board configuration.
+ * \brief SAM D2x SPI configuration
  *
- * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
+ * Copyright (C) 2014-2015 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -40,19 +40,11 @@
  * \asf_license_stop
  *
  */
-/*
- * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
- */
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+#ifndef CONF_SPI_H_INCLUDED
+#  define CONF_SPI_H_INCLUDED
 
-#define CONF_BOARD_AT86RFX
+#  define CONF_SPI_MASTER_ENABLE     true
+#  define CONF_SPI_SLAVE_ENABLE      false
 
-#define AT86RFX_SPI_BAUDRATE             5000000UL
-
-#define CONF_USER_ROW 0x804008
-
-#define CONF_IEEE_ADDRESS 0x0001020304050607LL
-
-#endif /* CONF_BOARD_H_INCLUDED */
+#endif /* CONF_SPI_H_INCLUDED */

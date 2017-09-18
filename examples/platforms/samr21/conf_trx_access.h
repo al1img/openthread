@@ -1,7 +1,7 @@
 /**
- * \file
+ * \file *********************************************************************
  *
- * \brief SAM R21 Xplained Pro board configuration.
+ * \brief Common TRX Access Configuration
  *
  * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
  *
@@ -38,21 +38,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * \asf_license_stop
- *
- */
-/*
- * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+#ifndef CONF_TRX_ACCESS_H_INCLUDED
+#define CONF_TRX_ACCESS_H_INCLUDED
 
-#define CONF_BOARD_AT86RFX
-
-#define AT86RFX_SPI_BAUDRATE             5000000UL
-
-#define CONF_USER_ROW 0x804008
-
-#define CONF_IEEE_ADDRESS 0x0001020304050607LL
-
-#endif /* CONF_BOARD_H_INCLUDED */
+#endif /* CONF_TRX_ACCESS_H_INCLUDED */

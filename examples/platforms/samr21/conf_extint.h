@@ -1,9 +1,9 @@
 /**
  * \file
  *
- * \brief SAM R21 Xplained Pro board configuration.
+ * \brief SAM D20 External Interrupt Driver Configuration Header
  *
- * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
+ * Copyright (C) 2014-2015 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -40,19 +40,10 @@
  * \asf_license_stop
  *
  */
-/*
- * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
- */
+#ifndef CONF_EXTINT_H_INCLUDED
+#define CONF_EXTINT_H_INCLUDED
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+#  define EXTINT_CLOCK_SOURCE      GCLK_GENERATOR_0
+#  define EXTINT_CALLBACKS_MAX     10
 
-#define CONF_BOARD_AT86RFX
-
-#define AT86RFX_SPI_BAUDRATE             5000000UL
-
-#define CONF_USER_ROW 0x804008
-
-#define CONF_IEEE_ADDRESS 0x0001020304050607LL
-
-#endif /* CONF_BOARD_H_INCLUDED */
+#endif
