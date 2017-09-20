@@ -32,14 +32,27 @@
  *
  */
 
+#include "phy.h"
+
 #include <openthread/platform/random.h>
 
 uint32_t otPlatRandomGet(void)
 {
-    return 0;
+    return (PHY_RandomReq() << 16 | PHY_RandomReq());
 }
 
 otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
 {
+    for (uint16_t i = 0; i < aOutputLength / sizeof(uint16_t); i++)
+    {
+        *((uint16_t*)aOutput) = PHY_RandomReq();
+        aOutput += sizeof(uint16_t);
+    }
+
+    for (uint16_t i = 0; i < aOutputLength % sizeof(uint16_t); i++)
+    {
+        aOutput[i] = PHY_RandomReq();
+    }
+
     return OT_ERROR_NONE;
 }
