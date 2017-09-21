@@ -44,10 +44,13 @@
 static otRadioFrame   sTransmitFrame;
 static uint8_t        sTransmitPsdu[OT_RADIO_FRAME_MAX_SIZE];
 
-static int8_t   sMaxRssi;
-static uint32_t sScanStartTime;
-static uint16_t sScanDuration;
-bool sStartScan = false;
+static otRadioState   sState             = OT_RADIO_STATE_DISABLED;
+static bool           sPromiscuous       = false;
+
+static int8_t         sMaxRssi;
+static uint32_t       sScanStartTime;
+static uint16_t       sScanDuration;
+static bool           sStartScan         = false;
 
 void samr21RadioInit(void)
 {
@@ -120,21 +123,44 @@ void otPlatRadioSetShortAddress(otInstance *aInstance, uint16_t aAddress)
 
 bool otPlatRadioIsEnabled(otInstance *aInstance)
 {
-    return true;
+    (void)aInstance;
+
+    return (sState != OT_RADIO_STATE_DISABLED);
 }
 
 otError otPlatRadioEnable(otInstance *aInstance)
 {
+    (void)aInstance;
+
+    if (sState == OT_RADIO_STATE_SLEEP)
+    {
+        PHY_Wakeup();
+    }
+
+    sState = OT_RADIO_STATE_RECEIVE;
+
+    PHY_SetRxState(true);
+
     return OT_ERROR_NONE;
 }
 
 otError otPlatRadioDisable(otInstance *aInstance)
 {
+    (void)aInstance;
+
+    sState = OT_RADIO_STATE_DISABLED;
+
+    PHY_SetRxState(false);
+
     return OT_ERROR_NONE;
 }
 
 otError otPlatRadioSleep(otInstance *aInstance)
 {
+    sState = OT_RADIO_STATE_SLEEP;
+
+    PHY_Sleep();
+
     return OT_ERROR_NONE;
 }
 
@@ -162,48 +188,58 @@ int8_t otPlatRadioGetRssi(otInstance *aInstance)
 
 otRadioCaps otPlatRadioGetCaps(otInstance *aInstance)
 {
-    return OT_RADIO_CAPS_ENERGY_SCAN;
+    return OT_RADIO_CAPS_ENERGY_SCAN | OT_RADIO_CAPS_TRANSMIT_RETRIES |
+           OT_RADIO_CAPS_ACK_TIMEOUT;
 }
 
 bool otPlatRadioGetPromiscuous(otInstance *aInstance)
 {
-    return false;
+    (void)aInstance;
+
+    return sPromiscuous;
 }
 
 void otPlatRadioSetPromiscuous(otInstance *aInstance, bool aEnable)
 {
+    (void)aInstance;
+
+    sPromiscuous = aEnable;
 }
 
 void otPlatRadioEnableSrcMatch(otInstance *aInstance, bool aEnable)
 {
+    (void)aInstance;
+    (void)aEnable;
 }
 
 otError otPlatRadioAddSrcMatchShortEntry(otInstance *aInstance, const uint16_t aShortAddress)
 {
-    return OT_ERROR_NONE;
+    return OT_ERROR_NOT_IMPLEMENTED;
 }
 
 otError otPlatRadioAddSrcMatchExtEntry(otInstance *aInstance, const otExtAddress *aExtAddress)
 {
-    return OT_ERROR_NONE;
+    return OT_ERROR_NOT_IMPLEMENTED;
 }
 
 otError otPlatRadioClearSrcMatchShortEntry(otInstance *aInstance, const uint16_t aShortAddress)
 {
-    return OT_ERROR_NONE;
+    return OT_ERROR_NOT_IMPLEMENTED;
 }
 
 otError otPlatRadioClearSrcMatchExtEntry(otInstance *aInstance, const otExtAddress *aExtAddress)
 {
-    return OT_ERROR_NONE;
+    return OT_ERROR_NOT_IMPLEMENTED;
 }
 
 void otPlatRadioClearSrcMatchShortEntries(otInstance *aInstance)
 {
+    (void)aInstance;
 }
 
 void otPlatRadioClearSrcMatchExtEntries(otInstance *aInstance)
 {
+    (void)aInstance;
 }
 
 otError otPlatRadioEnergyScan(otInstance *aInstance, uint8_t aScanChannel, uint16_t aScanDuration)

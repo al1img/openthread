@@ -88,12 +88,5 @@ extern uint32_t __d_nv_mem_end;
  */
 #define RADIO_CONFIG_SRC_MATCH_ENTRY_NUM                        128
 
-/**
- * @def OPENTHREAD_CONFIG_ENABLE_SOFTWARE_RETRANSMIT
- *
- * Define to 1 if you want to enable software retransmission logic.
- *
- */
-#define OPENTHREAD_CONFIG_ENABLE_SOFTWARE_RETRANSMIT            1
 
 #endif  // OPENTHREAD_CORE_SAMR21_CONFIG_H_
