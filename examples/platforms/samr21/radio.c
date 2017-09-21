@@ -52,6 +52,9 @@ static uint32_t       sScanStartTime;
 static uint16_t       sScanDuration;
 static bool           sStartScan         = false;
 
+static int8_t         sTxPowerTable[] = { 4, 4, 3, 3, 3, 2, 1, 0,
+                                         -1, -2, -3, -4, -6, -8, -12, -17 };
+
 void samr21RadioInit(void)
 {
     sTransmitFrame.mLength = 0;
@@ -244,6 +247,8 @@ void otPlatRadioClearSrcMatchExtEntries(otInstance *aInstance)
 
 otError otPlatRadioEnergyScan(otInstance *aInstance, uint8_t aScanChannel, uint16_t aScanDuration)
 {
+    (void)aInstance;
+
     sScanStartTime = otPlatAlarmMilliGetNow();
     sScanDuration = aScanDuration;
 
@@ -256,9 +261,26 @@ otError otPlatRadioEnergyScan(otInstance *aInstance, uint8_t aScanChannel, uint1
 
 void otPlatRadioSetDefaultTxPower(otInstance *aInstance, int8_t aPower)
 {
+    (void)aInstance;
+
+    uint8_t i;
+
+    for (i = 0; i < sizeof(sTxPowerTable); i++)
+    {
+        if (aPower >= sTxPowerTable[i])
+        {
+            PHY_SetTxPower(i);
+
+            return;
+        }
+    }
+
+    PHY_SetTxPower(i - 1);
 }
 
 int8_t otPlatRadioGetReceiveSensitivity(otInstance *aInstance)
 {
-    return 0;
+    (void)aInstance;
+
+    return -100;
 }
