@@ -134,7 +134,34 @@ void PHY_DataInd(PHY_DataInd_t *ind)
 
 void PHY_DataConf(uint8_t status)
 {
+    otError txStatus = OT_ERROR_ABORT;
 
+    if (status == PHY_STATUS_SUCCESS)
+    {
+        txStatus = OT_ERROR_NONE;
+    }
+    else if (status == PHY_STATUS_CHANNEL_ACCESS_FAILURE)
+    {
+        txStatus = OT_ERROR_CHANNEL_ACCESS_FAILURE;
+    }
+    else if (status == PHY_STATUS_NO_ACK)
+    {
+        txStatus = OT_ERROR_NO_ACK;
+    }
+
+    sState = OT_RADIO_STATE_RECEIVE;
+
+#if OPENTHREAD_ENABLE_DIAG
+
+    if (otPlatDiagModeGet())
+    {
+        otPlatDiagRadioTransmitDone(sInstance, &sTransmitFrame, txStatus);
+    }
+    else
+#endif
+    {
+        otPlatRadioTxDone(sInstance, &sTransmitFrame, NULL, txStatus);
+    }
 }
 
 /*******************************************************************************
@@ -231,6 +258,19 @@ otError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
 
 otError otPlatRadioTransmit(otInstance *aInstance, otRadioFrame *aFrame)
 {
+    uint8_t frame[OT_RADIO_FRAME_MAX_SIZE + 1];
+
+    frame[0] = aFrame->mLength;
+    memcpy(frame + 1, aFrame->mPsdu, aFrame->mLength);
+
+    PHY_SetChannel(aFrame->mChannel);
+
+    otPlatRadioSetDefaultTxPower(aInstance, aFrame->mPower);
+
+    sState = OT_RADIO_STATE_TRANSMIT;
+
+    otPlatRadioTxStarted(aInstance, aFrame);
+
     return OT_ERROR_NONE;
 }
 
