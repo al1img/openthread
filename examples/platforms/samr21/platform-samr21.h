@@ -38,6 +38,10 @@
 #include <stdint.h>
 
 #include "openthread/types.h"
+
+// Global OpenThread instance structure
+extern otInstance *sInstance;
+
 /**
  * This function initializes the alarm service used by OpenThread.
  *
@@ -77,4 +81,5 @@ void samr21RandomInit(void);
  *
  */
 void samr21UartProcess(void);
+
 #endif  // PLATFORM_SAMR21_H_

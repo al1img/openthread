@@ -34,15 +34,20 @@
 
 #include "asf.h"
 
-#include <phy.h>
-
 #include <openthread/platform/alarm-milli.h>
 #include <openthread/platform/radio.h>
 
-#define RSSI_BASE_VALUE (-94)
+#include "platform-samr21.h"
+
+enum
+{
+    IEEE802154_ACK_LENGTH      = 5
+};
 
 static otRadioFrame   sTransmitFrame;
 static uint8_t        sTransmitPsdu[OT_RADIO_FRAME_MAX_SIZE];
+
+static otRadioFrame   sReceiveFrame;
 
 static otRadioState   sState             = OT_RADIO_STATE_DISABLED;
 static bool           sPromiscuous       = false;
@@ -55,10 +60,16 @@ static bool           sStartScan         = false;
 static int8_t         sTxPowerTable[] = { 4, 4, 3, 3, 3, 2, 1, 0,
                                          -1, -2, -3, -4, -6, -8, -12, -17 };
 
+/*******************************************************************************
+ * Platform
+ ******************************************************************************/
 void samr21RadioInit(void)
 {
     sTransmitFrame.mLength = 0;
     sTransmitFrame.mPsdu   = sTransmitPsdu;
+
+    sReceiveFrame.mLength = 0;
+    sReceiveFrame.mPsdu = NULL;
 
     PHY_Init();
 }
@@ -84,7 +95,51 @@ void samr21RadioProcess(otInstance *aInstance)
             otPlatRadioEnergyScanDone(aInstance, sMaxRssi);
         }
     }
+
+    PHY_TaskHandler();
 }
+
+/*******************************************************************************
+ * PHY
+ ******************************************************************************/
+
+void PHY_DataInd(PHY_DataInd_t *ind)
+{
+    sReceiveFrame.mPsdu = ind->data;
+    sReceiveFrame.mLength = ind->size;
+    sReceiveFrame.mPower = ind->rssi;
+
+    #if OPENTHREAD_ENABLE_RAW_LINK_API
+    // Timestamp
+    sReceiveFrame.mMsec = otPlatAlarmMilliGetNow();
+    sReceiveFrame.mUsec = 0;  // Don't support microsecond timer for now.
+#endif
+
+#if OPENTHREAD_ENABLE_DIAG
+    if (otPlatDiagModeGet())
+    {
+        otPlatDiagRadioReceiveDone(sInstance, &sReceiveFrame, OT_ERROR_NONE);
+    }
+    else
+#endif
+    {
+        // signal MAC layer for each received frame if promiscous is enabled
+        // otherwise only signal MAC layer for non-ACK frame
+        if (sPromiscuous || sReceiveFrame.mLength > IEEE802154_ACK_LENGTH)
+        {
+            otPlatRadioReceiveDone(sInstance, &sReceiveFrame, OT_ERROR_NONE);
+        }
+    }
+}
+
+void PHY_DataConf(uint8_t status)
+{
+
+}
+
+/*******************************************************************************
+ * Radio
+ ******************************************************************************/
 
 void otPlatRadioGetIeeeEui64(otInstance *aInstance, uint8_t *aIeeeEui64)
 {
@@ -135,14 +190,9 @@ otError otPlatRadioEnable(otInstance *aInstance)
 {
     (void)aInstance;
 
-    if (sState == OT_RADIO_STATE_SLEEP)
-    {
-        PHY_Wakeup();
-    }
+    PHY_Sleep();
 
-    sState = OT_RADIO_STATE_RECEIVE;
-
-    PHY_SetRxState(true);
+    sState = OT_RADIO_STATE_SLEEP;
 
     return OT_ERROR_NONE;
 }
@@ -169,6 +219,13 @@ otError otPlatRadioSleep(otInstance *aInstance)
 
 otError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
 {
+    (void)aInstance;
+
+    sReceiveFrame.mChannel = aChannel;
+
+    PHY_SetChannel(aChannel);
+    PHY_SetRxState(true);
+
     return OT_ERROR_NONE;
 }
 
@@ -186,7 +243,7 @@ otRadioFrame *otPlatRadioGetTransmitBuffer(otInstance *aInstance)
 
 int8_t otPlatRadioGetRssi(otInstance *aInstance)
 {
-    return RSSI_BASE_VALUE + sMaxRssi;
+    return sMaxRssi;
 }
 
 otRadioCaps otPlatRadioGetCaps(otInstance *aInstance)
