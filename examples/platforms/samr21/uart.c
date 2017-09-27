@@ -120,13 +120,13 @@ otError otPlatUartEnable(void)
     usart_get_config_defaults(&configUsart);
 
     configUsart.baudrate    = 115200;
-    configUsart.mux_setting = EDBG_CDC_SERCOM_MUX_SETTING;
-    configUsart.pinmux_pad0 = EDBG_CDC_SERCOM_PINMUX_PAD0;
-    configUsart.pinmux_pad1 = EDBG_CDC_SERCOM_PINMUX_PAD1;
-    configUsart.pinmux_pad2 = EDBG_CDC_SERCOM_PINMUX_PAD2;
-    configUsart.pinmux_pad3 = EDBG_CDC_SERCOM_PINMUX_PAD3;
+    configUsart.mux_setting = UART_SERCOM_MUX_SETTING;
+    configUsart.pinmux_pad0 = UART_SERCOM_PINMUX_PAD0;
+    configUsart.pinmux_pad1 = UART_SERCOM_PINMUX_PAD1;
+    configUsart.pinmux_pad2 = UART_SERCOM_PINMUX_PAD2;
+    configUsart.pinmux_pad3 = UART_SERCOM_PINMUX_PAD3;
 
-    while (usart_init(&sUsartInstance, EDBG_CDC_MODULE, &configUsart)
+    while (usart_init(&sUsartInstance, UART_SERCOM_MODULE, &configUsart)
            != STATUS_OK);
 
     usart_enable(&sUsartInstance);

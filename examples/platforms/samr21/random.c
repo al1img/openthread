@@ -33,16 +33,34 @@
  */
 
 #include "phy.h"
-
+#include "platform-samr21.h"
+#include <openthread/platform/radio.h>
 #include <openthread/platform/random.h>
 
 uint32_t otPlatRandomGet(void)
 {
-    return (PHY_RandomReq() << 16 | PHY_RandomReq());
+    if (otPlatRadioGetState(sInstance) == OT_RADIO_STATE_SLEEP)
+    {
+        PHY_Wakeup();
+    }
+
+    uint32_t result = (PHY_RandomReq() << 16 | PHY_RandomReq());
+
+    if (otPlatRadioGetState(sInstance) == OT_RADIO_STATE_SLEEP)
+    {
+        PHY_Sleep();
+    }
+
+    return result;
 }
 
 otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
 {
+    if (otPlatRadioGetState(sInstance) == OT_RADIO_STATE_SLEEP)
+    {
+        PHY_Wakeup();
+    }
+
     for (uint16_t i = 0; i < aOutputLength / sizeof(uint16_t); i++)
     {
         *((uint16_t*)aOutput) = PHY_RandomReq();
@@ -52,6 +70,11 @@ otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
     for (uint16_t i = 0; i < aOutputLength % sizeof(uint16_t); i++)
     {
         aOutput[i] = PHY_RandomReq();
+    }
+
+    if (otPlatRadioGetState(sInstance) == OT_RADIO_STATE_SLEEP)
+    {
+        PHY_Sleep();
     }
 
     return OT_ERROR_NONE;

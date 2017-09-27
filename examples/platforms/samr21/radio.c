@@ -167,6 +167,11 @@ void PHY_DataConf(uint8_t status)
 /*******************************************************************************
  * Radio
  ******************************************************************************/
+otRadioState otPlatRadioGetState(otInstance *aInstance)
+{
+    (void)aInstance;
+    return sState;
+}
 
 void otPlatRadioGetIeeeEui64(otInstance *aInstance, uint8_t *aIeeeEui64)
 {
@@ -250,8 +255,13 @@ otError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
 
     sReceiveFrame.mChannel = aChannel;
 
-    PHY_SetChannel(aChannel);
+    if (sState == OT_RADIO_STATE_SLEEP)
+    {
+        PHY_Wakeup();
+    }
+
     PHY_SetRxState(true);
+    PHY_SetChannel(aChannel);
 
     return OT_ERROR_NONE;
 }
@@ -263,9 +273,16 @@ otError otPlatRadioTransmit(otInstance *aInstance, otRadioFrame *aFrame)
     frame[0] = aFrame->mLength;
     memcpy(frame + 1, aFrame->mPsdu, aFrame->mLength);
 
+    if (sState == OT_RADIO_STATE_SLEEP)
+    {
+        PHY_Wakeup();
+    }
+
     PHY_SetChannel(aFrame->mChannel);
 
     otPlatRadioSetDefaultTxPower(aInstance, aFrame->mPower);
+
+    PHY_DataReq(frame);
 
     sState = OT_RADIO_STATE_TRANSMIT;
 

@@ -35,8 +35,8 @@ override CXXFLAGS                            := $(filter-out -pedantic-errors,$(
 
 libopenthread_samr21_a_CPPFLAGS                                                                     = \
     -D ARM_MATH_CM0PLUS=true                                                                          \
-    -D BOARD=SAMR21_XPLAINED_PRO                                                                      \
-    -D __SAMR21G18A__                                                                                 \
+    -D BOARD=USER_BOARD                                                                               \
+    -D __SAMR21E18A__                                                                                 \
     -D PHY_AT86RF233                                                                                  \
     -D SAL_TYPE=AT86RF2xx                                                                             \
     -D USART_CALLBACK_MODE=true                                                                       \
