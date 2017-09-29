@@ -35,18 +35,6 @@ extern "C" {
 #define BOARD_MCK                       CHIP_FREQ_CPU_MAX
 #define BOARD_OSC_STARTUP_US            15625
 
-#if 0
-/** UART interface definitions */
-#define UART_SERCOM_MODULE              SERCOM0
-#define UART_SERCOM_MUX_SETTING         USART_RX_1_TX_0_XCK_1
-#define UART_SERCOM_PINMUX_PAD0         PINMUX_PA04D_SERCOM0_PAD0
-#define UART_SERCOM_PINMUX_PAD1         PINMUX_PA05D_SERCOM0_PAD1
-#define UART_SERCOM_PINMUX_PAD2         PINMUX_UNUSED
-#define UART_SERCOM_PINMUX_PAD3         PINMUX_UNUSED
-#define UART_SERCOM_DMAC_ID_TX          SERCOM0_DMAC_ID_TX
-#define UART_SERCOM_DMAC_ID_RX          SERCOM0_DMAC_ID_RX
-#endif
-
 /** UART interface definitions */
 #define UART_SERCOM_MODULE              SERCOM2
 #define UART_SERCOM_MUX_SETTING         USART_RX_3_TX_2_XCK_3
@@ -80,8 +68,6 @@ extern "C" {
 #define AT86RFX_SPI_MOSI                PIN_PB30
 #define AT86RFX_SPI_MISO                PIN_PC19
 #define AT86RFX_SPI_SCK                 PIN_PC18
-#define PIN_RFCTRL1                     PIN_PA09
-#define PIN_RFCTRL2                     PIN_PA12
 #define RFCTRL_CFG_ANT_DIV              4
 
 #define AT86RFX_SPI_SERCOM_MUX_SETTING  RF_SPI_SERCOM_MUX_SETTING
