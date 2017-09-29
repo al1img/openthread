@@ -35,8 +35,8 @@ override CXXFLAGS                            := $(filter-out -pedantic-errors,$(
 
 libopenthread_samr21_a_CPPFLAGS                                                                     = \
     -D ARM_MATH_CM0PLUS=true                                                                          \
-    -D BOARD=USER_BOARD                                                                               \
-    -D __SAMR21E18A__                                                                                 \
+    -D BOARD=SAMR21_XPLAINED_PRO                                                                      \
+    -D __SAMR21G18A__                                                                                 \
     -D PHY_AT86RF233                                                                                  \
     -D SAL_TYPE=AT86RF2xx                                                                             \
     -D USART_CALLBACK_MODE=true                                                                       \
@@ -122,7 +122,6 @@ nodist_libopenthread_samr21_a_SOURCES                                           
     @top_builddir@/third_party/microchip/sam0/drivers/system/clock/clock_samd21_r21_da_ha1/gclk.c     \
     @top_builddir@/third_party/microchip/sam0/drivers/system/interrupt/system_interrupt.c             \
     @top_builddir@/third_party/microchip/sam0/drivers/system/pinmux/pinmux.c                          \
-    @top_builddir@/third_party/microchip/sam0/drivers/system/system.c                                 \
     @top_builddir@/third_party/microchip/sam0/drivers/sercom/sercom.c                                 \
     @top_builddir@/third_party/microchip/sam0/drivers/sercom/sercom_interrupt.c                       \
     @top_builddir@/third_party/microchip/sam0/drivers/sercom/spi/spi.c                                \

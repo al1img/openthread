@@ -42,8 +42,9 @@ otInstance *sInstance;
 
 void PlatformInit(int argc, char *argv[])
 {
-    system_init();
+    system_clock_init();
     board_init();
+
     samr21AlarmInit();
     samr21RadioInit();
 }
