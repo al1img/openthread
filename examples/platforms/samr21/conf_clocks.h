@@ -69,7 +69,7 @@
 
 /* SYSTEM_CLOCK_SOURCE_XOSC32K configuration - External 32KHz crystal/clock
  * oscillator */
-#  define CONF_CLOCK_XOSC32K_ENABLE               true
+#  define CONF_CLOCK_XOSC32K_ENABLE               false
 #  define CONF_CLOCK_XOSC32K_EXTERNAL_CRYSTAL     SYSTEM_CLOCK_EXTERNAL_CRYSTAL
 #  define CONF_CLOCK_XOSC32K_STARTUP_TIME         SYSTEM_XOSC32K_STARTUP_65536
 #  define CONF_CLOCK_XOSC32K_AUTO_AMPLITUDE_CONTROL  true
@@ -144,7 +144,7 @@
 /* Configure GCLK generator 1 */
 #  define CONF_CLOCK_GCLK_1_ENABLE                true
 #  define CONF_CLOCK_GCLK_1_RUN_IN_STANDBY        false
-#  define CONF_CLOCK_GCLK_1_CLOCK_SOURCE          SYSTEM_CLOCK_SOURCE_XOSC32K
+#  define CONF_CLOCK_GCLK_1_CLOCK_SOURCE          SYSTEM_CLOCK_SOURCE_OSC32K
 #  define CONF_CLOCK_GCLK_1_PRESCALER             1
 #  define CONF_CLOCK_GCLK_1_OUTPUT_ENABLE         false
 
