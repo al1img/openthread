@@ -39,14 +39,16 @@
 
 uint32_t otPlatRandomGet(void)
 {
-    if (otPlatRadioGetState(sInstance) == OT_RADIO_STATE_SLEEP)
+    otRadioState radioState = otPlatRadioGetState(sInstance);
+
+    if (radioState == OT_RADIO_STATE_SLEEP || OT_RADIO_STATE_DISABLED)
     {
         PHY_Wakeup();
     }
 
     uint32_t result = (PHY_RandomReq() << 16 | PHY_RandomReq());
 
-    if (otPlatRadioGetState(sInstance) == OT_RADIO_STATE_SLEEP)
+    if (radioState == OT_RADIO_STATE_SLEEP || OT_RADIO_STATE_DISABLED)
     {
         PHY_Sleep();
     }
@@ -56,7 +58,9 @@ uint32_t otPlatRandomGet(void)
 
 otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
 {
-    if (otPlatRadioGetState(sInstance) == OT_RADIO_STATE_SLEEP)
+    otRadioState radioState = otPlatRadioGetState(sInstance);
+
+    if (radioState == OT_RADIO_STATE_SLEEP || OT_RADIO_STATE_DISABLED)
     {
         PHY_Wakeup();
     }
@@ -72,7 +76,7 @@ otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
         aOutput[i] = PHY_RandomReq();
     }
 
-    if (otPlatRadioGetState(sInstance) == OT_RADIO_STATE_SLEEP)
+    if (radioState == OT_RADIO_STATE_SLEEP || OT_RADIO_STATE_DISABLED)
     {
         PHY_Sleep();
     }

@@ -34,31 +34,182 @@
 
 #include "asf.h"
 
+#include <openthread/config.h>
 #include <openthread/platform/alarm-milli.h>
 #include <openthread/platform/radio.h>
 
 #include "platform-samr21.h"
+#include "common/logging.hpp"
 
 enum
 {
-    IEEE802154_ACK_LENGTH      = 5
+    IEEE802154_ACK_LENGTH      = 5,
+    IEEE802154_FCS_SIZE        = 2
 };
 
-static otRadioFrame   sTransmitFrame;
-static uint8_t        sTransmitPsdu[OT_RADIO_FRAME_MAX_SIZE];
+static otRadioFrame sTransmitFrame;
+static uint8_t      sTransmitPsdu[OT_RADIO_FRAME_MAX_SIZE];
 
-static otRadioFrame   sReceiveFrame;
+static otRadioFrame sReceiveFrame;
 
-static otRadioState   sState             = OT_RADIO_STATE_DISABLED;
-static bool           sPromiscuous       = false;
+static bool         sTxDone         = false;
+static bool         sRxDone         = false;
+static otError      sTxStatus       = OT_ERROR_NONE;
+static uint8_t      sChannel        = 0;
+static otRadioState sState          = OT_RADIO_STATE_DISABLED;
+static bool         sPromiscuous    = false;
 
-static int8_t         sMaxRssi;
-static uint32_t       sScanStartTime;
-static uint16_t       sScanDuration;
-static bool           sStartScan         = false;
+static int8_t       sMaxRssi;
+static uint32_t     sScanStartTime;
+static uint16_t     sScanDuration;
+static bool         sStartScan      = false;
 
 static int8_t         sTxPowerTable[] = { 4, 4, 3, 3, 3, 2, 1, 0,
                                          -1, -2, -3, -4, -6, -8, -12, -17 };
+
+/*******************************************************************************
+ * Static
+ ******************************************************************************/
+static void setChannel(uint8_t aChannel)
+{
+    if (aChannel != sChannel)
+    {
+        sChannel = aChannel;
+        PHY_SetChannel(aChannel);
+    }
+}
+
+static void setState(otRadioState aState)
+{
+    if (aState == sState)
+    {
+        return;
+    }
+
+    switch(aState)
+    {
+    case OT_RADIO_STATE_DISABLED:
+        PHY_SetRxState(false);
+        PHY_Sleep();
+        break;
+
+    case OT_RADIO_STATE_SLEEP:
+        PHY_SetRxState(false);
+        PHY_Sleep();
+        break;
+
+    case OT_RADIO_STATE_RECEIVE:
+        if (sState != OT_RADIO_STATE_TRANSMIT &&
+            sState != OT_RADIO_STATE_RECEIVE)
+        {
+            PHY_Wakeup();
+            PHY_SetRxState(true);
+        }
+        break;
+
+    case OT_RADIO_STATE_TRANSMIT:
+        break;
+
+    default:
+        break;
+    }
+
+    sState = aState;
+}
+
+static void setTxPower(uint8_t aPower)
+{
+    uint8_t i;
+
+    for (i = 0; i < sizeof(sTxPowerTable); i++)
+    {
+        if (aPower >= sTxPowerTable[i])
+        {
+            PHY_SetTxPower(i);
+
+            return;
+        }
+    }
+
+    PHY_SetTxPower(i - 1);
+}
+
+static void handleEnergyScan()
+{
+    if (sStartScan)
+    {
+        if ((otPlatAlarmMilliGetNow() - sScanStartTime) < sScanDuration)
+        {
+            int8_t curRssi = PHY_EdReq();
+
+            if (curRssi > sMaxRssi)
+            {
+                sMaxRssi = curRssi;
+            }
+        }
+        else
+        {
+            sStartScan = false;
+            otPlatRadioEnergyScanDone(sInstance, sMaxRssi);
+        }
+    }
+}
+
+static void handleRx(void)
+{
+    if (sRxDone)
+    {
+        sRxDone = false;
+
+#if OPENTHREAD_ENABLE_RAW_LINK_API
+        // Timestamp
+        sReceiveFrame.mMsec = otPlatAlarmMilliGetNow();
+        sReceiveFrame.mUsec = 0;  // Don't support microsecond timer for now.
+#endif
+
+#if OPENTHREAD_ENABLE_DIAG
+        if (otPlatDiagModeGet())
+        {
+            otPlatDiagRadioReceiveDone(sInstance, &sReceiveFrame, OT_ERROR_NONE);
+        }
+        else
+#endif
+        {
+            // signal MAC layer for each received frame if promiscous is enabled
+            // otherwise only signal MAC layer for non-ACK frame
+            if (sPromiscuous || sReceiveFrame.mLength > IEEE802154_ACK_LENGTH)
+            {
+                otLogDebgPlat(sInstance, "Receive ind");
+
+                otPlatRadioReceiveDone(sInstance, &sReceiveFrame, OT_ERROR_NONE);
+            }
+        }
+    }
+}
+
+static void handleTx(void)
+{
+    if (sTxDone)
+    {
+        sTxDone = false;
+
+        setState(OT_RADIO_STATE_RECEIVE);
+
+#if OPENTHREAD_ENABLE_DIAG
+
+        if (otPlatDiagModeGet())
+        {
+            otPlatDiagRadioTransmitDone(sInstance, &sTransmitFrame, sTxStatus);
+        }
+        else
+#endif
+        {
+            otLogDebgPlat(sInstance, "Transmit done");
+
+            otPlatRadioTxDone(sInstance, &sTransmitFrame, NULL, sTxStatus);
+        }
+    }
+}
 
 /*******************************************************************************
  * Platform
@@ -78,25 +229,11 @@ void samr21RadioProcess(otInstance *aInstance)
 {
     (void)aInstance;
 
-    if (sStartScan)
-    {
-        if ((otPlatAlarmMilliGetNow() - sScanStartTime) < sScanDuration)
-        {
-            int8_t curRssi = PHY_EdReq();
-
-            if (curRssi > sMaxRssi)
-            {
-                sMaxRssi = curRssi;
-            }
-        }
-        else
-        {
-            sStartScan = false;
-            otPlatRadioEnergyScanDone(aInstance, sMaxRssi);
-        }
-    }
-
     PHY_TaskHandler();
+
+    handleEnergyScan();
+    handleRx();
+    handleTx();
 }
 
 /*******************************************************************************
@@ -106,62 +243,30 @@ void samr21RadioProcess(otInstance *aInstance)
 void PHY_DataInd(PHY_DataInd_t *ind)
 {
     sReceiveFrame.mPsdu = ind->data;
-    sReceiveFrame.mLength = ind->size;
+    sReceiveFrame.mLength = ind->size + IEEE802154_FCS_SIZE;
     sReceiveFrame.mPower = ind->rssi;
 
-    #if OPENTHREAD_ENABLE_RAW_LINK_API
-    // Timestamp
-    sReceiveFrame.mMsec = otPlatAlarmMilliGetNow();
-    sReceiveFrame.mUsec = 0;  // Don't support microsecond timer for now.
-#endif
-
-#if OPENTHREAD_ENABLE_DIAG
-    if (otPlatDiagModeGet())
-    {
-        otPlatDiagRadioReceiveDone(sInstance, &sReceiveFrame, OT_ERROR_NONE);
-    }
-    else
-#endif
-    {
-        // signal MAC layer for each received frame if promiscous is enabled
-        // otherwise only signal MAC layer for non-ACK frame
-        if (sPromiscuous || sReceiveFrame.mLength > IEEE802154_ACK_LENGTH)
-        {
-            otPlatRadioReceiveDone(sInstance, &sReceiveFrame, OT_ERROR_NONE);
-        }
-    }
+    sRxDone = true;
 }
 
 void PHY_DataConf(uint8_t status)
 {
-    otError txStatus = OT_ERROR_ABORT;
+    sTxStatus = OT_ERROR_ABORT;
 
     if (status == PHY_STATUS_SUCCESS)
     {
-        txStatus = OT_ERROR_NONE;
+        sTxStatus = OT_ERROR_NONE;
     }
     else if (status == PHY_STATUS_CHANNEL_ACCESS_FAILURE)
     {
-        txStatus = OT_ERROR_CHANNEL_ACCESS_FAILURE;
+        sTxStatus = OT_ERROR_CHANNEL_ACCESS_FAILURE;
     }
     else if (status == PHY_STATUS_NO_ACK)
     {
-        txStatus = OT_ERROR_NO_ACK;
+        sTxStatus = OT_ERROR_NO_ACK;
     }
 
-    sState = OT_RADIO_STATE_RECEIVE;
-
-#if OPENTHREAD_ENABLE_DIAG
-
-    if (otPlatDiagModeGet())
-    {
-        otPlatDiagRadioTransmitDone(sInstance, &sTransmitFrame, txStatus);
-    }
-    else
-#endif
-    {
-        otPlatRadioTxDone(sInstance, &sTransmitFrame, NULL, txStatus);
-    }
+    sTxDone = true;
 }
 
 /*******************************************************************************
@@ -194,6 +299,8 @@ void otPlatRadioSetPanId(otInstance *aInstance, uint16_t aPanId)
 {
     (void)aInstance;
 
+    otLogDebgPlat(sInstance, "Set Pan ID: 0x%04X", aPanId);
+
     PHY_SetPanId(aPanId);
 }
 
@@ -222,9 +329,9 @@ otError otPlatRadioEnable(otInstance *aInstance)
 {
     (void)aInstance;
 
-    PHY_Sleep();
+    otLogDebgPlat(sInstance, "Enable radio");
 
-    sState = OT_RADIO_STATE_SLEEP;
+    setState(OT_RADIO_STATE_SLEEP);
 
     return OT_ERROR_NONE;
 }
@@ -233,18 +340,18 @@ otError otPlatRadioDisable(otInstance *aInstance)
 {
     (void)aInstance;
 
-    sState = OT_RADIO_STATE_DISABLED;
+    otLogDebgPlat(sInstance, "Disable radio");
 
-    PHY_SetRxState(false);
+    setState(OT_RADIO_STATE_DISABLED);
 
     return OT_ERROR_NONE;
 }
 
 otError otPlatRadioSleep(otInstance *aInstance)
 {
-    sState = OT_RADIO_STATE_SLEEP;
+    otLogDebgPlat(sInstance, "Sleep radio");
 
-    PHY_Sleep();
+    setState(OT_RADIO_STATE_SLEEP);
 
     return OT_ERROR_NONE;
 }
@@ -253,15 +360,13 @@ otError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
 {
     (void)aInstance;
 
+    otLogDebgPlat(sInstance, "Receive radio, channel: %d", aChannel);
+
     sReceiveFrame.mChannel = aChannel;
 
-    if (sState == OT_RADIO_STATE_SLEEP)
-    {
-        PHY_Wakeup();
-    }
+    setChannel(aChannel);
 
-    PHY_SetRxState(true);
-    PHY_SetChannel(aChannel);
+    setState(OT_RADIO_STATE_RECEIVE);
 
     return OT_ERROR_NONE;
 }
@@ -270,21 +375,16 @@ otError otPlatRadioTransmit(otInstance *aInstance, otRadioFrame *aFrame)
 {
     uint8_t frame[OT_RADIO_FRAME_MAX_SIZE + 1];
 
+    otLogDebgPlat(sInstance, "Transmit radio, channel: %d", aFrame->mChannel);
+
     frame[0] = aFrame->mLength;
     memcpy(frame + 1, aFrame->mPsdu, aFrame->mLength);
 
-    if (sState == OT_RADIO_STATE_SLEEP)
-    {
-        PHY_Wakeup();
-    }
-
-    PHY_SetChannel(aFrame->mChannel);
-
-    otPlatRadioSetDefaultTxPower(aInstance, aFrame->mPower);
+    setChannel(aFrame->mChannel);
+    setTxPower(aFrame->mPower);
+    setState(OT_RADIO_STATE_TRANSMIT);
 
     PHY_DataReq(frame);
-
-    sState = OT_RADIO_STATE_TRANSMIT;
 
     otPlatRadioTxStarted(aInstance, aFrame);
 
@@ -306,7 +406,7 @@ int8_t otPlatRadioGetRssi(otInstance *aInstance)
 otRadioCaps otPlatRadioGetCaps(otInstance *aInstance)
 {
     return OT_RADIO_CAPS_ENERGY_SCAN | OT_RADIO_CAPS_TRANSMIT_RETRIES |
-           OT_RADIO_CAPS_ACK_TIMEOUT;
+           OT_RADIO_CAPS_ACK_TIMEOUT | OT_RADIO_CAPS_CSMA_BACKOFF;
 }
 
 bool otPlatRadioGetPromiscuous(otInstance *aInstance)
@@ -377,19 +477,7 @@ void otPlatRadioSetDefaultTxPower(otInstance *aInstance, int8_t aPower)
 {
     (void)aInstance;
 
-    uint8_t i;
-
-    for (i = 0; i < sizeof(sTxPowerTable); i++)
-    {
-        if (aPower >= sTxPowerTable[i])
-        {
-            PHY_SetTxPower(i);
-
-            return;
-        }
-    }
-
-    PHY_SetTxPower(i - 1);
+    setTxPower(aPower);
 }
 
 int8_t otPlatRadioGetReceiveSensitivity(otInstance *aInstance)
