@@ -56,6 +56,7 @@ static bool         sTxDone         = false;
 static bool         sRxDone         = false;
 static otError      sTxStatus       = OT_ERROR_NONE;
 static uint8_t      sChannel        = 0;
+static uint8_t      sPower          = 255;
 static otRadioState sState          = OT_RADIO_STATE_DISABLED;
 static bool         sPromiscuous    = false;
 
@@ -74,13 +75,48 @@ static void setChannel(uint8_t aChannel)
 {
     if (aChannel != sChannel)
     {
-        sChannel = aChannel;
         PHY_SetChannel(aChannel);
+        sChannel = aChannel;
     }
 }
 
-static void setState(otRadioState aState)
+static void setTxPower(uint8_t aPower)
 {
+    if (aPower == sPower)
+    {
+        return;
+    }
+
+    uint8_t i;
+
+    for (i = 0; i < sizeof(sTxPowerTable); i++)
+    {
+        if (aPower >= sTxPowerTable[i])
+        {
+            i++;
+            break;
+        }
+    }
+
+    otLogDebgPlat(sInstance, "Radio set tx power: %d, %d", aPower, i - 1);
+
+    PHY_SetTxPower(i - 1);
+
+    sPower = aPower;
+}
+
+static void setRadioState(otRadioState aState, uint8_t aChannel, uint8_t aPower)
+{
+    if (aChannel != sChannel || aPower != sPower)
+    {
+        PHY_SetRxState(false);
+
+        setChannel(aChannel);
+        setTxPower(aPower);
+
+        sState = OT_RADIO_STATE_DISABLED;
+    }
+
     if (aState == sState)
     {
         return;
@@ -90,24 +126,24 @@ static void setState(otRadioState aState)
     {
     case OT_RADIO_STATE_DISABLED:
         PHY_SetRxState(false);
-        PHY_Sleep();
         break;
 
     case OT_RADIO_STATE_SLEEP:
         PHY_SetRxState(false);
-        PHY_Sleep();
         break;
 
     case OT_RADIO_STATE_RECEIVE:
-        if (sState != OT_RADIO_STATE_TRANSMIT &&
-            sState != OT_RADIO_STATE_RECEIVE)
+        if (sState != OT_RADIO_STATE_TRANSMIT)
         {
-            PHY_Wakeup();
             PHY_SetRxState(true);
         }
         break;
 
     case OT_RADIO_STATE_TRANSMIT:
+        if (sState != OT_RADIO_STATE_RECEIVE)
+        {
+            PHY_SetRxState(true);
+        }
         break;
 
     default:
@@ -115,23 +151,6 @@ static void setState(otRadioState aState)
     }
 
     sState = aState;
-}
-
-static void setTxPower(uint8_t aPower)
-{
-    uint8_t i;
-
-    for (i = 0; i < sizeof(sTxPowerTable); i++)
-    {
-        if (aPower >= sTxPowerTable[i])
-        {
-            PHY_SetTxPower(i);
-
-            return;
-        }
-    }
-
-    PHY_SetTxPower(i - 1);
 }
 
 static void handleEnergyScan()
@@ -179,7 +198,8 @@ static void handleRx(void)
             // otherwise only signal MAC layer for non-ACK frame
             if (sPromiscuous || sReceiveFrame.mLength > IEEE802154_ACK_LENGTH)
             {
-                otLogDebgPlat(sInstance, "Receive ind");
+                otLogDebgPlat(sInstance, "Radio receive done, rssi: %d",
+                              sReceiveFrame.mPower);
 
                 otPlatRadioReceiveDone(sInstance, &sReceiveFrame, OT_ERROR_NONE);
             }
@@ -193,7 +213,7 @@ static void handleTx(void)
     {
         sTxDone = false;
 
-        setState(OT_RADIO_STATE_RECEIVE);
+        setRadioState(OT_RADIO_STATE_RECEIVE, sChannel, sPower);
 
 #if OPENTHREAD_ENABLE_DIAG
 
@@ -204,36 +224,12 @@ static void handleTx(void)
         else
 #endif
         {
-            otLogDebgPlat(sInstance, "Transmit done");
+            otLogDebgPlat(sInstance, "Radio transmit done, status: %d",
+                          sTxStatus);
 
             otPlatRadioTxDone(sInstance, &sTransmitFrame, NULL, sTxStatus);
         }
     }
-}
-
-/*******************************************************************************
- * Platform
- ******************************************************************************/
-void samr21RadioInit(void)
-{
-    sTransmitFrame.mLength = 0;
-    sTransmitFrame.mPsdu   = sTransmitPsdu;
-
-    sReceiveFrame.mLength = 0;
-    sReceiveFrame.mPsdu = NULL;
-
-    PHY_Init();
-}
-
-void samr21RadioProcess(otInstance *aInstance)
-{
-    (void)aInstance;
-
-    PHY_TaskHandler();
-
-    handleEnergyScan();
-    handleRx();
-    handleTx();
 }
 
 /*******************************************************************************
@@ -267,6 +263,31 @@ void PHY_DataConf(uint8_t status)
     }
 
     sTxDone = true;
+}
+
+/*******************************************************************************
+ * Platform
+ ******************************************************************************/
+void samr21RadioInit(void)
+{
+    sTransmitFrame.mLength = 0;
+    sTransmitFrame.mPsdu   = sTransmitPsdu;
+
+    sReceiveFrame.mLength = 0;
+    sReceiveFrame.mPsdu = NULL;
+
+    PHY_Init();
+}
+
+void samr21RadioProcess(otInstance *aInstance)
+{
+    (void)aInstance;
+
+    PHY_TaskHandler();
+
+    handleEnergyScan();
+    handleRx();
+    handleTx();
 }
 
 /*******************************************************************************
@@ -331,7 +352,7 @@ otError otPlatRadioEnable(otInstance *aInstance)
 
     otLogDebgPlat(sInstance, "Enable radio");
 
-    setState(OT_RADIO_STATE_SLEEP);
+    setRadioState(OT_RADIO_STATE_SLEEP, sChannel, sPower);
 
     return OT_ERROR_NONE;
 }
@@ -342,7 +363,7 @@ otError otPlatRadioDisable(otInstance *aInstance)
 
     otLogDebgPlat(sInstance, "Disable radio");
 
-    setState(OT_RADIO_STATE_DISABLED);
+    setRadioState(OT_RADIO_STATE_DISABLED, sChannel, sPower);
 
     return OT_ERROR_NONE;
 }
@@ -351,7 +372,7 @@ otError otPlatRadioSleep(otInstance *aInstance)
 {
     otLogDebgPlat(sInstance, "Sleep radio");
 
-    setState(OT_RADIO_STATE_SLEEP);
+    setRadioState(OT_RADIO_STATE_SLEEP, sChannel, sPower);
 
     return OT_ERROR_NONE;
 }
@@ -360,13 +381,11 @@ otError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
 {
     (void)aInstance;
 
-    otLogDebgPlat(sInstance, "Receive radio, channel: %d", aChannel);
+    otLogDebgPlat(sInstance, "Radio receive, channel: %d", aChannel);
 
     sReceiveFrame.mChannel = aChannel;
 
-    setChannel(aChannel);
-
-    setState(OT_RADIO_STATE_RECEIVE);
+    setRadioState(OT_RADIO_STATE_RECEIVE, aChannel, sPower);
 
     return OT_ERROR_NONE;
 }
@@ -375,14 +394,12 @@ otError otPlatRadioTransmit(otInstance *aInstance, otRadioFrame *aFrame)
 {
     uint8_t frame[OT_RADIO_FRAME_MAX_SIZE + 1];
 
-    otLogDebgPlat(sInstance, "Transmit radio, channel: %d", aFrame->mChannel);
+    otLogDebgPlat(sInstance, "Radio transmit, channel: %d", aFrame->mChannel);
 
-    frame[0] = aFrame->mLength;
+    frame[0] = aFrame->mLength - IEEE802154_FCS_SIZE;
     memcpy(frame + 1, aFrame->mPsdu, aFrame->mLength);
 
-    setChannel(aFrame->mChannel);
-    setTxPower(aFrame->mPower);
-    setState(OT_RADIO_STATE_TRANSMIT);
+    setRadioState(OT_RADIO_STATE_TRANSMIT, aFrame->mChannel, aFrame->mPower);
 
     PHY_DataReq(frame);
 
@@ -477,7 +494,7 @@ void otPlatRadioSetDefaultTxPower(otInstance *aInstance, int8_t aPower)
 {
     (void)aInstance;
 
-    setTxPower(aPower);
+    setRadioState(sState, sChannel, aPower);
 }
 
 int8_t otPlatRadioGetReceiveSensitivity(otInstance *aInstance)
