@@ -57,6 +57,26 @@ extern uint32_t __d_nv_mem_end;
 #define OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT             1
 
 /**
+ * @def OPENTHREAD_CONFIG_LOG_LEVEL
+ *
+ * The log level (used at compile time).
+ *
+ */
+#define OPENTHREAD_CONFIG_LOG_LEVEL                             OT_LOG_LEVEL_DEBG
+
+/**
+* @def OPENTHREAD_CONFIG_LOG_PLATFORM
+*
+* Define to enable platform region logging.
+*
+*/
+#define OPENTHREAD_CONFIG_LOG_PLATFORM                          1
+
+#define OPENTHREAD_CONFIG_LOG_MAC                               0
+
+#define OPENTHREAD_CONFIG_LOG_MLE                               0
+
+/**
  * @def SETTINGS_CONFIG_BASE_ADDRESS
  *
  * The base address of settings.
@@ -87,6 +107,14 @@ extern uint32_t __d_nv_mem_end;
  *
  */
 #define RADIO_CONFIG_SRC_MATCH_ENTRY_NUM                        128
+
+/**
+ * @def OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER
+ *
+ * The default IEEE 802.15.4 maximum transmit power (dBm)
+ *
+ */
+#define OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER            5
 
 
 #endif  // OPENTHREAD_CORE_SAMR21_CONFIG_H_
