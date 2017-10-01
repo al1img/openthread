@@ -40,6 +40,27 @@
 
 otInstance *sInstance;
 
+void board_init(void)
+{
+    struct port_config pin_conf;
+
+    port_get_config_defaults(&pin_conf);
+    pin_conf.direction  = PORT_PIN_DIR_OUTPUT;
+    port_pin_set_config(AT86RFX_SPI_SCK, &pin_conf);
+    port_pin_set_config(AT86RFX_SPI_MOSI, &pin_conf);
+    port_pin_set_config(AT86RFX_SPI_CS, &pin_conf);
+    port_pin_set_config(AT86RFX_RST_PIN, &pin_conf);
+    port_pin_set_config(AT86RFX_SLP_PIN, &pin_conf);
+    port_pin_set_output_level(AT86RFX_SPI_SCK, true);
+    port_pin_set_output_level(AT86RFX_SPI_MOSI, true);
+    port_pin_set_output_level(AT86RFX_SPI_CS, true);
+    port_pin_set_output_level(AT86RFX_RST_PIN, true);
+    port_pin_set_output_level(AT86RFX_SLP_PIN, true);
+
+    pin_conf.direction  = PORT_PIN_DIR_INPUT;
+    port_pin_set_config(AT86RFX_SPI_MISO, &pin_conf);
+}
+
 void PlatformInit(int argc, char *argv[])
 {
     system_clock_init();
