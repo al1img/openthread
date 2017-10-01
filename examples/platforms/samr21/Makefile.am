@@ -33,10 +33,16 @@ lib_LIBRARIES = libopenthread-samr21.a
 override CFLAGS                              := $(filter-out -pedantic-errors,$(CFLAGS))
 override CXXFLAGS                            := $(filter-out -pedantic-errors,$(CXXFLAGS))
 
+SAMR21_BOARD=USER_BOARD
+SAMR21_CPU=__SAMR21E18A__
+
+#SAMR21_BOARD=SAMR21_XPLAINED_PRO
+#SAMR21_CPU=__SAMR21G18A__
+
 libopenthread_samr21_a_CPPFLAGS                                                                     = \
     -D ARM_MATH_CM0PLUS=true                                                                          \
-    -D BOARD=SAMR21_XPLAINED_PRO                                                                      \
-    -D __SAMR21G18A__                                                                                 \
+    -D BOARD=$(SAMR21_BOARD)                                                                          \
+    -D $(SAMR21_CPU)                                                                                  \
     -D PHY_AT86RF233                                                                                  \
     -D SAL_TYPE=AT86RF2xx                                                                             \
     -D USART_CALLBACK_MODE=true                                                                       \
@@ -88,7 +94,6 @@ libopenthread_samr21_a_CPPFLAGS                                                 
 PLATFORM_SOURCES                                                                                    = \
     alarm.c                                                                                           \
     cxx_helpers.c                                                                                     \
-    diag.c                                                                                            \
     flash.c                                                                                           \
     logging.c                                                                                         \
     misc.c                                                                                            \
@@ -98,22 +103,19 @@ PLATFORM_SOURCES                                                                
     uart.c                                                                                            \
     $(NULL)
 
-libopenthread_samr21_a_SOURCES                                                                      = \
-    $(NULL)
-
 if OPENTHREAD_ENABLE_DIAG
 PLATFORM_SOURCES                                                                                   += \
+    diag.c                                                                                            \
     $(NULL)
 endif
 
-libopenthread_samr21_a_SOURCES                                                                     += \
+libopenthread_samr21_a_SOURCES                                                                      = \
     $(PLATFORM_SOURCES)                                                                               \
     $(NULL)
 
 nodist_libopenthread_samr21_a_SOURCES                                                               = \
     @top_builddir@/third_party/microchip/common/utils/interrupt/interrupt_sam_nvic.c                  \
     @top_builddir@/third_party/microchip/common2/services/delay/sam0/cycle_counter.c                  \
-    @top_builddir@/third_party/microchip/sam0/boards/samr21_xplained_pro/board_init.c                 \
     @top_builddir@/third_party/microchip/sam0/drivers/extint/extint_callback.c                        \
     @top_builddir@/third_party/microchip/sam0/drivers/extint/extint_sam_d_r_h/extint.c                \
     @top_builddir@/third_party/microchip/sam0/drivers/nvm/nvm.c                                       \
