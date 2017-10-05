@@ -281,6 +281,8 @@ void samr21RadioInit(void)
     sReceiveFrame.mPsdu = NULL;
 
     PHY_Init();
+
+    sal_init();
 }
 
 void samr21RadioProcess(otInstance *aInstance)
