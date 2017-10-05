@@ -66,7 +66,8 @@ static uint16_t     sScanDuration;
 static bool         sStartScan      = false;
 
 static int8_t         sTxPowerTable[] = { 4, 4, 3, 3, 3, 2, 1, 0,
-                                         -1, -2, -3, -4, -6, -8, -12, -17 };
+                                          -1, -2, -3, -4, -6, -8, -12, -17
+                                        };
 
 /*******************************************************************************
  * Static
@@ -122,7 +123,7 @@ static void setRadioState(otRadioState aState, uint8_t aChannel, uint8_t aPower)
         return;
     }
 
-    switch(aState)
+    switch (aState)
     {
     case OT_RADIO_STATE_DISABLED:
         PHY_SetRxState(false);
@@ -137,6 +138,7 @@ static void setRadioState(otRadioState aState, uint8_t aChannel, uint8_t aPower)
         {
             PHY_SetRxState(true);
         }
+
         break;
 
     case OT_RADIO_STATE_TRANSMIT:
@@ -144,6 +146,7 @@ static void setRadioState(otRadioState aState, uint8_t aChannel, uint8_t aPower)
         {
             PHY_SetRxState(true);
         }
+
         break;
 
     default:
@@ -187,6 +190,7 @@ static void handleRx(void)
 #endif
 
 #if OPENTHREAD_ENABLE_DIAG
+
         if (otPlatDiagModeGet())
         {
             otPlatDiagRadioReceiveDone(sInstance, &sReceiveFrame, OT_ERROR_NONE);
@@ -304,15 +308,16 @@ void otPlatRadioGetIeeeEui64(otInstance *aInstance, uint8_t *aIeeeEui64)
     (void)aInstance;
 
 #ifdef CONF_IEEE_ADDRESS
-    *((uint64_t*)aIeeeEui64) = CONF_IEEE_ADDRESS;
+    *((uint64_t *)aIeeeEui64) = CONF_IEEE_ADDRESS;
 #else
-    uint8_t* userRow = (uint8_t*)CONF_USER_ROW;
+    uint8_t *userRow = (uint8_t *)CONF_USER_ROW;
 
     for (uint8_t i = 0; i < OT_EXT_ADDRESS_SIZE; i++)
     {
         // TODO: define proper userRow struct
         aIeeeEui64[i] = userRow[2 + i];
     }
+
 #endif
 }
 
@@ -329,7 +334,7 @@ void otPlatRadioSetExtendedAddress(otInstance *aInstance, const otExtAddress *aA
 {
     (void)aInstance;
 
-    PHY_SetIEEEAddr((uint8_t*)aAddress);
+    PHY_SetIEEEAddr((uint8_t *)aAddress);
 }
 
 void otPlatRadioSetShortAddress(otInstance *aInstance, uint16_t aAddress)

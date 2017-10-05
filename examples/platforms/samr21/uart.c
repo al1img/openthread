@@ -66,7 +66,7 @@ static void usartReadCallback(struct usart_module *const usartModule)
     }
 
     usart_read_job(&sUsartInstance,
-                   (uint16_t*)&sReceive.mBuffer[sReceive.mTail]);
+                   (uint16_t *)&sReceive.mBuffer[sReceive.mTail]);
 }
 
 static void usartWriteCallback(struct usart_module *const usartModule)
@@ -143,7 +143,7 @@ otError otPlatUartEnable(void)
     usart_enable_callback(&sUsartInstance, USART_CALLBACK_BUFFER_RECEIVED);
 
     usart_read_job(&sUsartInstance,
-                   (uint16_t*)&sReceive.mBuffer[sReceive.mTail]);
+                   (uint16_t *)&sReceive.mBuffer[sReceive.mTail]);
 
     return OT_ERROR_NONE;
 }
@@ -157,7 +157,7 @@ otError otPlatUartDisable(void)
 
 otError otPlatUartSend(const uint8_t *aBuf, uint16_t aBufLength)
 {
-    if (usart_write_buffer_job(&sUsartInstance, (uint8_t*)aBuf,
+    if (usart_write_buffer_job(&sUsartInstance, (uint8_t *)aBuf,
                                aBufLength) != STATUS_OK)
     {
         return OT_ERROR_FAILED;

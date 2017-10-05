@@ -48,7 +48,7 @@ otError utilsFlashInit(void)
 
     enum status_code status;
 
-    while((status = nvm_set_config(&configNvm)) == STATUS_BUSY);
+    while ((status = nvm_set_config(&configNvm)) == STATUS_BUSY);
 
     if (status != STATUS_OK)
     {
@@ -95,14 +95,14 @@ uint32_t utilsFlashWrite(uint32_t aAddress, uint8_t *aData, uint32_t aSize)
 {
     if ((aData == NULL) || (aAddress < SETTINGS_CONFIG_BASE_ADDRESS) ||
         ((aAddress - SETTINGS_CONFIG_BASE_ADDRESS + aSize) >
-        utilsFlashGetSize()) || (aAddress & 3) || (aSize & 3))
+         utilsFlashGetSize()) || (aAddress & 3) || (aSize & 3))
     {
         return 0;
     }
 
     for (uint32_t i = 0; i < (aSize / sizeof(uint32_t)); i++)
     {
-        *((volatile uint32_t*)aAddress) = *((uint32_t*)aData);
+        *((volatile uint32_t *)aAddress) = *((uint32_t *)aData);
         aData += sizeof(uint32_t);
         aAddress += sizeof(uint32_t);
     }
@@ -125,7 +125,7 @@ uint32_t utilsFlashRead(uint32_t aAddress, uint8_t *aData, uint32_t aSize)
 {
     if ((aData == NULL) || (aAddress < SETTINGS_CONFIG_BASE_ADDRESS) ||
         ((aAddress - SETTINGS_CONFIG_BASE_ADDRESS + aSize) >
-        utilsFlashGetSize()))
+         utilsFlashGetSize()))
     {
         return 0;
     }
