@@ -28,59 +28,27 @@
 
 /**
  * @file
- * @brief
  *   This file includes the platform-specific initializers.
+ *
  */
 
-#include "asf.h"
+#ifndef USER_ROW_H_
+#define USER_ROW_H_
 
-#include <openthread/platform/platform.h>
+#define SAMR21_USER_ROW 0x804008
 
-#include "platform-samr21.h"
-
-otInstance *sInstance;
-
-samr21UserRow *sUserRow = (samr21UserRow *)SAMR21_USER_ROW;
-
-void board_init(void)
+OT_TOOL_PACKED_BEGIN
+struct samr21UserRow
 {
-    struct port_config pin_conf;
+    uint16_t mRevision;
+    uint8_t  mMacAddress[8];
+    uint8_t  mBoardSerial[10];
+    uint8_t  mPartNumber[8];
+    uint8_t  mPcbRevision;
+    uint8_t  mCrystalCal;
+    uint16_t mCrc16;
+} OT_TOOL_PACKED_END;
 
-    port_get_config_defaults(&pin_conf);
-    pin_conf.direction  = PORT_PIN_DIR_OUTPUT;
-    port_pin_set_config(AT86RFX_SPI_SCK, &pin_conf);
-    port_pin_set_config(AT86RFX_SPI_MOSI, &pin_conf);
-    port_pin_set_config(AT86RFX_SPI_CS, &pin_conf);
-    port_pin_set_config(AT86RFX_RST_PIN, &pin_conf);
-    port_pin_set_config(AT86RFX_SLP_PIN, &pin_conf);
-    port_pin_set_output_level(AT86RFX_SPI_SCK, true);
-    port_pin_set_output_level(AT86RFX_SPI_MOSI, true);
-    port_pin_set_output_level(AT86RFX_SPI_CS, true);
-    port_pin_set_output_level(AT86RFX_RST_PIN, true);
-    port_pin_set_output_level(AT86RFX_SLP_PIN, true);
+typedef struct samr21UserRow samr21UserRow;
 
-    pin_conf.direction  = PORT_PIN_DIR_INPUT;
-    port_pin_set_config(AT86RFX_SPI_MISO, &pin_conf);
-}
-
-void PlatformInit(int argc, char *argv[])
-{
-    system_clock_init();
-    board_init();
-
-    samr21AlarmInit();
-    samr21RadioInit();
-}
-
-void PlatformDeinit(void)
-{
-}
-
-void PlatformProcessDrivers(otInstance *aInstance)
-{
-    sInstance = aInstance;
-
-    samr21UartProcess();
-    samr21AlarmProcess(aInstance);
-    samr21RadioProcess(aInstance);
-}
+#endif /* USER_ROW_H_ */

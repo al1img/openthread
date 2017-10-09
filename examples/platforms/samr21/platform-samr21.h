@@ -38,9 +38,13 @@
 #include <stdint.h>
 
 #include "openthread/types.h"
+#include "user_row.h"
 
 // Global OpenThread instance structure
 extern otInstance *sInstance;
+
+// Global samr21UserRow structure
+extern samr21UserRow *sUserRow;
 
 /**
  * This function initializes the alarm service used by OpenThread.

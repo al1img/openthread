@@ -357,6 +357,7 @@ void samr21RadioRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
 otRadioState otPlatRadioGetState(otInstance *aInstance)
 {
     (void)aInstance;
+
     return sState;
 }
 
@@ -367,14 +368,7 @@ void otPlatRadioGetIeeeEui64(otInstance *aInstance, uint8_t *aIeeeEui64)
 #ifdef CONF_IEEE_ADDRESS
     *((uint64_t *)aIeeeEui64) = CONF_IEEE_ADDRESS;
 #else
-    uint8_t *userRow = (uint8_t *)CONF_USER_ROW;
-
-    for (uint8_t i = 0; i < OT_EXT_ADDRESS_SIZE; i++)
-    {
-        // TODO: define proper userRow struct
-        aIeeeEui64[i] = userRow[2 + i];
-    }
-
+    memcpy(aIeeeEui64, sUserRow->mMacAddress, OT_EXT_ADDRESS_SIZE);
 #endif
 }
 
