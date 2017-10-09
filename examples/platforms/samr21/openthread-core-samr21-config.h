@@ -49,12 +49,25 @@ extern uint32_t __d_nv_mem_end;
 #define OPENTHREAD_CONFIG_PLATFORM_INFO                         "SAMR21"
 
 /**
- * @def OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT
+ * @def OPENTHREAD_CONFIG_LOG_OUTPUT
  *
- * Define to 1 to enable default log output.
+ * Selects if, and where the LOG output goes to.
+ *
+ * There are several options available
+ * - @sa OPENTHREAD_CONFIG_LOG_OUTPUT_NONE
+ * - @sa OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
+ * - @sa OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART
+ * - and others
+ *
+ * Note:
+ *
+ * 1) Because the default is: OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
+ *    The platform is expected to provide at least a stub for `otPlatLog()`
+ *
+ * 2) This is effectively an ENUM so it can be if/else/endif at compile time.
  *
  */
-#define OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT             1
+#define OPENTHREAD_CONFIG_LOG_OUTPUT    OPENTHREAD_CONFIG_LOG_OUTPUT_APP
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_LEVEL
