@@ -71,6 +71,18 @@ void samr21RadioInit(void);
 void samr21RadioProcess(otInstance *aInstance);
 
 /**
+ * This function returns 32-bits random value.
+ *
+ */
+uint32_t samr21RadioRandomGet(void);
+
+/**
+ * This function returns random value sequence.
+ *
+ */
+void samr21RadioRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength);
+
+/**
  * This function initializes the random number service used by OpenThread.
  *
  */

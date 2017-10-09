@@ -52,13 +52,15 @@ static uint8_t      sTransmitPsdu[OT_RADIO_FRAME_MAX_SIZE];
 
 static otRadioFrame sReceiveFrame;
 
+static bool         sSleep          = false;
+static bool         sRxEnable       = false;
 static bool         sTxDone         = false;
 static bool         sRxDone         = false;
 static otError      sTxStatus       = OT_ERROR_NONE;
-static uint8_t      sChannel        = 0;
-static uint8_t      sPower          = 255;
+static int8_t       sPower          = OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER;
 static otRadioState sState          = OT_RADIO_STATE_DISABLED;
 static bool         sPromiscuous    = false;
+static uint8_t      sChannel        = 0xFF;
 
 static int8_t       sMaxRssi;
 static uint32_t     sScanStartTime;
@@ -72,88 +74,109 @@ static int8_t         sTxPowerTable[] = { 4, 4, 3, 3, 3, 2, 1, 0,
 /*******************************************************************************
  * Static
  ******************************************************************************/
-static void setChannel(uint8_t aChannel)
+
+static void radioSleep()
 {
-    if (aChannel != sChannel)
+    if (!sSleep)
     {
-        PHY_SetChannel(aChannel);
-        sChannel = aChannel;
+        PHY_SetRxState(false);
+        PHY_Sleep();
+
+        sSleep = true;
+        sRxEnable = false;
+    }
+}
+
+static void radioWakeup()
+{
+    if (sSleep)
+    {
+        PHY_Wakeup();
+    }
+}
+
+static void radioRxEnable()
+{
+    if (sSleep)
+    {
+        PHY_Wakeup();
+
+        sSleep = false;
+
+        sal_aes_restart();
+    }
+
+    if (!sRxEnable)
+    {
+        PHY_SetRxState(true);
+    }
+}
+
+static void radioTrxOff()
+{
+    if (sSleep)
+    {
+        PHY_Wakeup();
+    }
+    else if (sRxEnable)
+    {
+        PHY_SetRxState(false);
+    }
+}
+
+static void radioRestore()
+{
+    if (sSleep)
+    {
+        PHY_Sleep();
+    }
+    else if (sRxEnable)
+    {
+        PHY_SetRxState(true);
     }
 }
 
 static void setTxPower(uint8_t aPower)
 {
-    if (aPower == sPower)
+    if (aPower != sPower)
     {
-        return;
-    }
+        uint8_t i;
 
-    uint8_t i;
-
-    for (i = 0; i < sizeof(sTxPowerTable); i++)
-    {
-        if (aPower >= sTxPowerTable[i])
+        for (i = 0; i < sizeof(sTxPowerTable); i++)
         {
-            i++;
-            break;
+            if (aPower >= sTxPowerTable[i])
+            {
+                i++;
+                break;
+            }
         }
+
+        otLogDebgPlat(sInstance, "Radio set tx power: %d, %d", aPower, i - 1);
+
+        radioTrxOff();
+
+        PHY_SetTxPower(i - 1);
+
+        radioRestore();
+
+        sPower = aPower;
     }
-
-    otLogDebgPlat(sInstance, "Radio set tx power: %d, %d", aPower, i - 1);
-
-    PHY_SetTxPower(i - 1);
-
-    sPower = aPower;
 }
 
-static void setRadioState(otRadioState aState, uint8_t aChannel, uint8_t aPower)
+static void setChannel(uint8_t aChannel)
 {
-    if (aChannel != sChannel || aPower != sPower)
+    if (aChannel != sChannel)
     {
-        PHY_SetRxState(false);
+        otLogDebgPlat(sInstance, "Radio set channek: %d", aChannel);
 
-        setChannel(aChannel);
-        setTxPower(aPower);
+        radioTrxOff();
 
-        sState = OT_RADIO_STATE_DISABLED;
+        PHY_SetChannel(aChannel);
+
+        radioRestore();
+
+        sChannel = aChannel;
     }
-
-    if (aState == sState)
-    {
-        return;
-    }
-
-    switch (aState)
-    {
-    case OT_RADIO_STATE_DISABLED:
-        PHY_SetRxState(false);
-        break;
-
-    case OT_RADIO_STATE_SLEEP:
-        PHY_SetRxState(false);
-        break;
-
-    case OT_RADIO_STATE_RECEIVE:
-        if (sState != OT_RADIO_STATE_TRANSMIT)
-        {
-            PHY_SetRxState(true);
-        }
-
-        break;
-
-    case OT_RADIO_STATE_TRANSMIT:
-        if (sState != OT_RADIO_STATE_RECEIVE)
-        {
-            PHY_SetRxState(true);
-        }
-
-        break;
-
-    default:
-        break;
-    }
-
-    sState = aState;
 }
 
 static void handleEnergyScan()
@@ -172,7 +195,10 @@ static void handleEnergyScan()
         else
         {
             sStartScan = false;
+
             otPlatRadioEnergyScanDone(sInstance, sMaxRssi);
+
+            radioRestore();
         }
     }
 }
@@ -216,8 +242,6 @@ static void handleTx(void)
     if (sTxDone)
     {
         sTxDone = false;
-
-        setRadioState(OT_RADIO_STATE_RECEIVE, sChannel, sPower);
 
 #if OPENTHREAD_ENABLE_DIAG
 
@@ -296,6 +320,37 @@ void samr21RadioProcess(otInstance *aInstance)
     handleTx();
 }
 
+uint32_t samr21RadioRandomGet(void)
+{
+    uint32_t result;
+
+    radioWakeup();
+
+    result = PHY_RandomReq() << 16 | PHY_RandomReq();
+
+    radioRestore();
+
+    return result;
+}
+
+void samr21RadioRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+{
+    radioWakeup();
+
+    for (uint16_t i = 0; i < aOutputLength / sizeof(uint16_t); i++)
+    {
+        *((uint16_t *)aOutput) = PHY_RandomReq();
+        aOutput += sizeof(uint16_t);
+    }
+
+    for (uint16_t i = 0; i < aOutputLength % sizeof(uint16_t); i++)
+    {
+        aOutput[i] = PHY_RandomReq();
+    }
+
+    radioRestore();
+}
+
 /*******************************************************************************
  * Radio
  ******************************************************************************/
@@ -329,21 +384,33 @@ void otPlatRadioSetPanId(otInstance *aInstance, uint16_t aPanId)
 
     otLogDebgPlat(sInstance, "Set Pan ID: 0x%04X", aPanId);
 
+    radioTrxOff();
+
     PHY_SetPanId(aPanId);
+
+    radioRestore();
 }
 
 void otPlatRadioSetExtendedAddress(otInstance *aInstance, const otExtAddress *aAddress)
 {
     (void)aInstance;
 
-    PHY_SetIEEEAddr((uint8_t *)aAddress);
+    radioTrxOff();
+
+    PHY_SetIEEEAddr((uint8_t *)&aAddress);
+
+    radioRestore();
 }
 
 void otPlatRadioSetShortAddress(otInstance *aInstance, uint16_t aAddress)
 {
     (void)aInstance;
 
+    radioTrxOff();
+
     PHY_SetShortAddr(aAddress);
+
+    radioRestore();
 }
 
 bool otPlatRadioIsEnabled(otInstance *aInstance)
@@ -355,33 +422,50 @@ bool otPlatRadioIsEnabled(otInstance *aInstance)
 
 otError otPlatRadioEnable(otInstance *aInstance)
 {
-    (void)aInstance;
+    otLogDebgPlat(sInstance, "Radio enable");
 
-    otLogDebgPlat(sInstance, "Enable radio");
+    if (!otPlatRadioIsEnabled(aInstance))
+    {
+        radioSleep();
 
-    setRadioState(OT_RADIO_STATE_SLEEP, sChannel, sPower);
+        sState = OT_RADIO_STATE_SLEEP;
+    }
 
     return OT_ERROR_NONE;
 }
 
 otError otPlatRadioDisable(otInstance *aInstance)
 {
-    (void)aInstance;
+    otLogDebgPlat(sInstance, "Radio disable");
 
-    otLogDebgPlat(sInstance, "Disable radio");
+    if (otPlatRadioIsEnabled(aInstance))
+    {
+        radioSleep();
 
-    setRadioState(OT_RADIO_STATE_DISABLED, sChannel, sPower);
+        sState = OT_RADIO_STATE_DISABLED;
+    }
 
     return OT_ERROR_NONE;
 }
 
 otError otPlatRadioSleep(otInstance *aInstance)
 {
-    otLogDebgPlat(sInstance, "Sleep radio");
+    (void)aInstance;
 
-    setRadioState(OT_RADIO_STATE_SLEEP, sChannel, sPower);
+    otLogDebgPlat(sInstance, "Radio sleep");
 
-    return OT_ERROR_NONE;
+    otError error = OT_ERROR_INVALID_STATE;
+
+    if (sState == OT_RADIO_STATE_SLEEP || sState == OT_RADIO_STATE_RECEIVE)
+    {
+        radioSleep();
+
+        sState = OT_RADIO_STATE_SLEEP;
+
+        error = OT_ERROR_NONE;
+    }
+
+    return error;
 }
 
 otError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
@@ -390,29 +474,50 @@ otError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
 
     otLogDebgPlat(sInstance, "Radio receive, channel: %d", aChannel);
 
-    sReceiveFrame.mChannel = aChannel;
+    otError error = OT_ERROR_INVALID_STATE;
 
-    setRadioState(OT_RADIO_STATE_RECEIVE, aChannel, sPower);
+    if (sState != OT_RADIO_STATE_DISABLED)
+    {
+        setChannel(aChannel);
 
-    return OT_ERROR_NONE;
+        radioRxEnable();
+
+        sState = OT_RADIO_STATE_RECEIVE;
+
+        error = OT_ERROR_NONE;
+    }
+
+    return error;
 }
 
 otError otPlatRadioTransmit(otInstance *aInstance, otRadioFrame *aFrame)
 {
-    uint8_t frame[OT_RADIO_FRAME_MAX_SIZE + 1];
+    (void)aInstance;
 
-    otLogDebgPlat(sInstance, "Radio transmit, channel: %d", aFrame->mChannel);
+    otLogDebgPlat(sInstance, "Radio transmit");
 
-    frame[0] = aFrame->mLength - IEEE802154_FCS_SIZE;
-    memcpy(frame + 1, aFrame->mPsdu, aFrame->mLength);
+    otError error = OT_ERROR_INVALID_STATE;
 
-    setRadioState(OT_RADIO_STATE_TRANSMIT, aFrame->mChannel, aFrame->mPower);
+    if (sState == OT_RADIO_STATE_RECEIVE)
+    {
+        uint8_t frame[OT_RADIO_FRAME_MAX_SIZE + 1];
 
-    PHY_DataReq(frame);
+        setChannel(aFrame->mChannel);
+        setTxPower(aFrame->mPower);
 
-    otPlatRadioTxStarted(aInstance, aFrame);
+        frame[0] = aFrame->mLength - IEEE802154_FCS_SIZE;
+        memcpy(frame + 1, aFrame->mPsdu, aFrame->mLength);
 
-    return OT_ERROR_NONE;
+        PHY_DataReq(frame);
+
+        otPlatRadioTxStarted(aInstance, aFrame);
+
+        sState = OT_RADIO_STATE_TRANSMIT;
+
+        error = OT_ERROR_NONE;
+    }
+
+    return error;
 }
 
 otRadioFrame *otPlatRadioGetTransmitBuffer(otInstance *aInstance)
@@ -501,7 +606,9 @@ void otPlatRadioSetDefaultTxPower(otInstance *aInstance, int8_t aPower)
 {
     (void)aInstance;
 
-    setRadioState(sState, sChannel, aPower);
+    otLogDebgPlat(sInstance, "Radio set default TX power: %d", aPower);
+
+    setTxPower(aPower);
 }
 
 int8_t otPlatRadioGetReceiveSensitivity(otInstance *aInstance)
