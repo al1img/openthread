@@ -75,7 +75,7 @@ extern uint32_t __d_nv_mem_end;
  * The log level (used at compile time).
  *
  */
-#define OPENTHREAD_CONFIG_LOG_LEVEL                             OT_LOG_LEVEL_DEBG
+#define OPENTHREAD_CONFIG_LOG_LEVEL                             OT_LOG_LEVEL_WARN
 
 /**
 * @def OPENTHREAD_CONFIG_LOG_PLATFORM
@@ -83,7 +83,7 @@ extern uint32_t __d_nv_mem_end;
 * Define to enable platform region logging.
 *
 */
-#define OPENTHREAD_CONFIG_LOG_PLATFORM                          1
+#define OPENTHREAD_CONFIG_LOG_PLATFORM                          0
 
 #define OPENTHREAD_CONFIG_LOG_MAC                               0
 
