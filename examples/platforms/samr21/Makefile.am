@@ -33,11 +33,11 @@ lib_LIBRARIES = libopenthread-samr21.a
 override CFLAGS                              := $(filter-out -pedantic-errors,$(CFLAGS))
 override CXXFLAGS                            := $(filter-out -pedantic-errors,$(CXXFLAGS))
 
-SAMR21_BOARD=USER_BOARD
-SAMR21_CPU=__SAMR21E18A__
+#SAMR21_BOARD=USER_BOARD
+#SAMR21_CPU=__SAMR21E18A__
 
-#SAMR21_BOARD=SAMR21_XPLAINED_PRO
-#SAMR21_CPU=__SAMR21G18A__
+SAMR21_BOARD=SAMR21_XPLAINED_PRO
+SAMR21_CPU=__SAMR21G18A__
 
 libopenthread_samr21_a_CPPFLAGS                                                                     = \
     -D ARM_MATH_CM0PLUS=true                                                                          \
