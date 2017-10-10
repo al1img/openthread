@@ -393,7 +393,7 @@ void otPlatRadioSetExtendedAddress(otInstance *aInstance, const otExtAddress *aA
 
     radioTrxOff();
 
-    PHY_SetIEEEAddr((uint8_t *)&aAddress);
+    PHY_SetIEEEAddr((uint8_t *)aAddress);
 
     radioRestore();
 }
