@@ -109,6 +109,8 @@ static void radioRxEnable()
     if (!sRxEnable)
     {
         PHY_SetRxState(true);
+
+        sRxEnable = true;
     }
 }
 
@@ -167,7 +169,7 @@ static void setChannel(uint8_t aChannel)
 {
     if (aChannel != sChannel)
     {
-        otLogDebgPlat(sInstance, "Radio set channek: %d", aChannel);
+        otLogDebgPlat(sInstance, "Radio set channel: %d", aChannel);
 
         radioTrxOff();
 
