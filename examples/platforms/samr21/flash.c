@@ -34,12 +34,14 @@ ead Authors.
 
 #include "asf.h"
 
+#include "utils/code_utils.h"
 #include "utils/flash.h"
 
 #include "openthread-core-samr21-config.h"
 
 otError utilsFlashInit(void)
 {
+    otError error = OT_ERROR_NONE;
     struct nvm_config configNvm;
 
     nvm_get_config_defaults(&configNvm);
@@ -52,10 +54,10 @@ otError utilsFlashInit(void)
 
     if (status != STATUS_OK)
     {
-        return OT_ERROR_FAILED;
+        error = OT_ERROR_FAILED;
     }
 
-    return OT_ERROR_NONE;
+    return error;
 }
 
 uint32_t utilsFlashGetSize(void)
@@ -65,12 +67,14 @@ uint32_t utilsFlashGetSize(void)
 
 otError utilsFlashErasePage(uint32_t aAddress)
 {
+    otError error = OT_ERROR_NONE;
+
     if (nvm_erase_row(aAddress) != STATUS_OK)
     {
-        return OT_ERROR_FAILED;
+        error = OT_ERROR_FAILED;
     }
 
-    return OT_ERROR_NONE;
+    return error;
 }
 
 otError utilsFlashStatusWait(uint32_t aTimeout)
@@ -93,12 +97,13 @@ otError utilsFlashStatusWait(uint32_t aTimeout)
 
 uint32_t utilsFlashWrite(uint32_t aAddress, uint8_t *aData, uint32_t aSize)
 {
-    if ((aData == NULL) || (aAddress < SETTINGS_CONFIG_BASE_ADDRESS) ||
-        ((aAddress - SETTINGS_CONFIG_BASE_ADDRESS + aSize) >
-         utilsFlashGetSize()) || (aAddress & 3) || (aSize & 3))
-    {
-        return 0;
-    }
+    uint32_t rval = aSize;
+
+    otEXPECT_ACTION(aData, rval = 0);
+    otEXPECT_ACTION(aAddress >= SETTINGS_CONFIG_BASE_ADDRESS, rval = 0);
+    otEXPECT_ACTION((aAddress - SETTINGS_CONFIG_BASE_ADDRESS + aSize) <=
+                    utilsFlashGetSize(), rval = 0);
+    otEXPECT_ACTION(((aAddress & 3) == 0) && ((aSize & 3) == 0), rval = 0);
 
     for (uint32_t i = 0; i < (aSize / sizeof(uint32_t)); i++)
     {
@@ -110,30 +115,30 @@ uint32_t utilsFlashWrite(uint32_t aAddress, uint8_t *aData, uint32_t aSize)
     // check if write page command is required
     if ((aAddress) & (NVMCTRL_PAGE_SIZE - 1))
     {
-        if (nvm_execute_command(NVM_COMMAND_WRITE_PAGE,
-                                aAddress & (~(NVMCTRL_PAGE_SIZE - 1)), 0) !=
-            STATUS_OK)
-        {
-            return 0;
-        }
+        otEXPECT_ACTION(nvm_execute_command(NVM_COMMAND_WRITE_PAGE,
+                                            aAddress & (~(NVMCTRL_PAGE_SIZE - 1)),
+                                            0) == STATUS_OK,
+                        rval = 0);
     }
 
-    return aSize;
+exit:
+    return rval;
 }
 
 uint32_t utilsFlashRead(uint32_t aAddress, uint8_t *aData, uint32_t aSize)
 {
-    if ((aData == NULL) || (aAddress < SETTINGS_CONFIG_BASE_ADDRESS) ||
-        ((aAddress - SETTINGS_CONFIG_BASE_ADDRESS + aSize) >
-         utilsFlashGetSize()))
-    {
-        return 0;
-    }
+    uint32_t rval = aSize;
+
+    otEXPECT_ACTION(aData, rval = 0);
+    otEXPECT_ACTION(aAddress >= SETTINGS_CONFIG_BASE_ADDRESS, rval = 0);
+    otEXPECT_ACTION((aAddress - SETTINGS_CONFIG_BASE_ADDRESS + aSize) <=
+                    utilsFlashGetSize(), rval = 0);
 
     while (aSize--)
     {
         *aData++ = (*(uint8_t *)(aAddress++));
     }
 
-    return aSize;
+exit:
+    return rval;
 }

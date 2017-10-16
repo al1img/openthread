@@ -157,12 +157,14 @@ otError otPlatUartDisable(void)
 
 otError otPlatUartSend(const uint8_t *aBuf, uint16_t aBufLength)
 {
+    otError error = OT_ERROR_NONE;
+
     if (usart_write_buffer_job(&sUsartInstance, (uint8_t *)aBuf,
                                aBufLength) != STATUS_OK)
     {
-        return OT_ERROR_FAILED;
+        error = OT_ERROR_FAILED;
     }
 
-    return OT_ERROR_NONE;
+    return error;
 }
 

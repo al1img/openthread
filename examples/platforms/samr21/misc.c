@@ -46,35 +46,39 @@ void otPlatReset(otInstance *aInstance)
 
 otPlatResetReason otPlatGetResetReason(otInstance *aInstance)
 {
+    otPlatResetReason reason;
+
     switch (system_get_reset_cause())
     {
     /** The system was last reset by a software reset */
     case SYSTEM_RESET_CAUSE_SOFTWARE:
-        return OT_PLAT_RESET_REASON_SOFTWARE;
+        reason = OT_PLAT_RESET_REASON_SOFTWARE;
 
     /** The system was last reset by the watchdog timer */
     case SYSTEM_RESET_CAUSE_WDT:
-        return OT_PLAT_RESET_REASON_WATCHDOG;
+        reason = OT_PLAT_RESET_REASON_WATCHDOG;
 
     /** The system was last reset because the external reset
         line was pulled low */
     case SYSTEM_RESET_CAUSE_EXTERNAL_RESET:
-        return OT_PLAT_RESET_REASON_EXTERNAL;
+        reason = OT_PLAT_RESET_REASON_EXTERNAL;
 
     /** The system was last reset by the BOD33 */
     case SYSTEM_RESET_CAUSE_BOD33:
 
     /** The system was last reset by the BOD12 */
     case SYSTEM_RESET_CAUSE_BOD12:
-        return OT_PLAT_RESET_REASON_FAULT;
+        reason = OT_PLAT_RESET_REASON_FAULT;
 
     /** The system was last reset by the POR (Power on reset) */
     case SYSTEM_RESET_CAUSE_POR:
-        return OT_PLAT_RESET_REASON_POWER_ON;
+        reason = OT_PLAT_RESET_REASON_POWER_ON;
 
     default:
-        return OT_PLAT_RESET_REASON_UNKNOWN;
+        reason = OT_PLAT_RESET_REASON_UNKNOWN;
     }
+
+    return reason;
 }
 
 void otPlatWakeHost(void)

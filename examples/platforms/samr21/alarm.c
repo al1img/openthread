@@ -42,12 +42,14 @@ static uint32_t          sAlarmTime = 0;
 void otPlatAlarmMilliStartAt(otInstance *aInstance, uint32_t aT0, uint32_t aDt)
 {
     (void)aInstance;
+
     sAlarmTime = aT0 + aDt;
 }
 
 void otPlatAlarmMilliStop(otInstance *aInstance)
 {
     (void)aInstance;
+
     sAlarmTime = 0;
 }
 
@@ -73,6 +75,7 @@ void samr21AlarmProcess(otInstance *aInstance)
     if ((sAlarmTime != 0) && (sTime >= sAlarmTime))
     {
         sAlarmTime = 0;
+
 #if OPENTHREAD_ENABLE_DIAG
 
         if (otPlatDiagModeGet())
