@@ -102,8 +102,6 @@ static void radioRxEnable()
         PHY_Wakeup();
 
         sSleep = false;
-
-        sal_aes_restart();
     }
 
     if (!sRxEnable)
@@ -307,8 +305,6 @@ void samr21RadioInit(void)
     sReceiveFrame.mPsdu = NULL;
 
     PHY_Init();
-
-    sal_init();
 }
 
 void samr21RadioProcess(otInstance *aInstance)

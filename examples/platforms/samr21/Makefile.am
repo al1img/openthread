@@ -92,7 +92,6 @@ libopenthread_samr21_a_CPPFLAGS                                                 
     $(NULL)
 
 PLATFORM_SOURCES                                                                                    = \
-    crypto/aes_alt.c                                                                                  \
     alarm.c                                                                                           \
     cxx_helpers.c                                                                                     \
     flash.c                                                                                           \
