@@ -530,6 +530,54 @@ AC_MSG_CHECKING([sould NCP support UART])
 AC_MSG_RESULT([${OPENTHREAD_ENABLE_UART}])
 
 #
+# smartsocket app
+#
+AC_ARG_ENABLE(smartsocket-app,
+    [AS_HELP_STRING([--enable-smartsocket-app],[Enable smartsocket app (no|mtd|ftd|all) @<:@default=no@:>@.])],
+    [
+        case "${enableval}" in
+        all|both)
+            enable_smartsocket_app=yes
+            enable_smartsocket_app_mtd=yes
+            enable_smartsocket_app_ftd=yes
+            ;;
+        no|yes)
+            enable_smartsocket_app=${enableval}
+            enable_smartsocket_app_mtd=${enableval}
+            enable_smartsocket_app_ftd=${enableval}
+            ;;
+        mtd)
+            enable_smartsocket_app=yes
+            enable_smartsocket_app_mtd=yes
+            enable_smartsocket_app_ftd=no
+            ;;
+        ftd)
+            enable_smartsocket_app=yes
+            enable_smartsocket_app_mtd=no
+            enable_smartsocket_app_ftd=yes
+            ;;
+        *)
+            AC_MSG_ERROR([Invalid value ${enableval} for --enable-smartsocket-app])
+            ;;
+        esac
+    ],
+    [
+     enable_smartsocket_app=no
+     enable_smartsocket_app_mtd=no
+     enable_smartsocket_app_ftd=no])
+
+
+AC_MSG_CHECKING([smartsocket-app modes])
+AC_MSG_RESULT(${enable_smartsocket_app})
+AM_CONDITIONAL([OPENTHREAD_ENABLE_SMARTSOCKET],     [test "${enable_smartsocket_app}" == "yes"])
+AM_CONDITIONAL([OPENTHREAD_ENABLE_SMARTSOCKET_MTD], [test "${enable_smartsocket_app_mtd}" == "yes"])
+AM_CONDITIONAL([OPENTHREAD_ENABLE_SMARTSOCKET_FTD], [test "${enable_smartsocket_app_ftd}" == "yes"])
+AC_SUBST(OPENTHREAD_ENABLE_SMARTSOCKET)
+AC_SUBST(OPENTHREAD_ENABLE_SMARTSOCKET_FTD)
+AC_SUBST(OPENTHREAD_ENABLE_SMARTSOCKET_MTD)
+
+
+#
 # Multiple OpenThread Instances
 #
 
@@ -1473,6 +1521,7 @@ examples/Makefile
 examples/apps/Makefile
 examples/apps/cli/Makefile
 examples/apps/ncp/Makefile
+examples/apps/smartsocket/Makefile
 examples/platforms/Makefile
 examples/platforms/cc2538/Makefile
 examples/platforms/cc2650/Makefile

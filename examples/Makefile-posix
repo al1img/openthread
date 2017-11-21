@@ -50,6 +50,7 @@ configure_OPTIONS                   = \
     --enable-cert-log                 \
     --enable-child-supervision        \
     --enable-cli-app=all              \
+    --enable-smartsocket-app=all      \
     --enable-commissioner             \
     --enable-dhcp6-client             \
     --enable-dhcp6-server             \

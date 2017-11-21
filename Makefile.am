@@ -35,6 +35,7 @@ AM_DISTCHECK_CONFIGURE_FLAGS        = \
     --enable-application-coap         \
     --enable-border-router            \
     --enable-cli-app=all              \
+    --enable-smartsocket-app=all      \
     --enable-commissioner             \
     --enable-dhcp6-client             \
     --enable-dhcp6-server             \
