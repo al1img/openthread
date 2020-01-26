@@ -15,6 +15,18 @@
             "interface": "swd",
             "ipAddress": null,
             "serialNumber": null,
+        },
+        {
+            "name": "NRF52840",
+            "cwd": "${workspaceRoot}",
+            "executable": "./output/nrf52840/bin/ot-ncp-ftd",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "device": "NRF52840_XXAA",
+            "interface": "swd",
+            "ipAddress": null,
+            "serialNumber": null,
         }
     ]
 }
